@@ -9,5 +9,4 @@ public class CyberRangeBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(CyberRangeBackendApplication.class, args);
     }
-
 }

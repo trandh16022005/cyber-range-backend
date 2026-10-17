@@ -10,10 +10,10 @@
 -- ============================================================
 
 CREATE TABLE roles (
-                       id              BIGSERIAL PRIMARY KEY,
-                       name            VARCHAR(50) NOT NULL UNIQUE,
-                       description     TEXT,
-                       created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id              BIGSERIAL PRIMARY KEY,
+    name            VARCHAR(50) NOT NULL UNIQUE,
+    description     TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -23,22 +23,22 @@ CREATE TABLE roles (
 -- ============================================================
 
 CREATE TABLE users (
-                       id              BIGSERIAL PRIMARY KEY,
-                       role_id         BIGINT NOT NULL,
-                       username        VARCHAR(100) NOT NULL UNIQUE,
-                       email           VARCHAR(255) NOT NULL UNIQUE,
-                       password_hash   VARCHAR(255) NOT NULL,
-                       full_name       VARCHAR(255) NOT NULL,
-                       status          VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
-                       created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                       updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    role_id         BIGINT NOT NULL,
+    username        VARCHAR(100) NOT NULL UNIQUE,
+    email           VARCHAR(255) NOT NULL UNIQUE,
+    password_hash   VARCHAR(255) NOT NULL,
+    full_name       VARCHAR(255) NOT NULL,
+    status          VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                       CONSTRAINT fk_users_role
-                           FOREIGN KEY (role_id)
-                               REFERENCES roles(id),
+    CONSTRAINT fk_users_role
+        FOREIGN KEY (role_id)
+        REFERENCES roles(id),
 
-                       CONSTRAINT chk_users_status
-                           CHECK (status IN ('ACTIVE', 'INACTIVE', 'LOCKED'))
+    CONSTRAINT chk_users_status
+        CHECK (status IN ('ACTIVE', 'INACTIVE', 'LOCKED'))
 );
 
 
@@ -48,10 +48,10 @@ CREATE TABLE users (
 -- ============================================================
 
 CREATE TABLE teams (
-                       id              BIGSERIAL PRIMARY KEY,
-                       name            VARCHAR(100) NOT NULL UNIQUE,
-                       description     TEXT,
-                       created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id              BIGSERIAL PRIMARY KEY,
+    name            VARCHAR(100) NOT NULL UNIQUE,
+    description     TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -61,21 +61,21 @@ CREATE TABLE teams (
 -- ============================================================
 
 CREATE TABLE team_members (
-                              team_id         BIGINT NOT NULL,
-                              user_id         BIGINT NOT NULL,
-                              joined_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    team_id         BIGINT NOT NULL,
+    user_id         BIGINT NOT NULL,
+    joined_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                              PRIMARY KEY (team_id, user_id),
+    PRIMARY KEY (team_id, user_id),
 
-                              CONSTRAINT fk_team_members_team
-                                  FOREIGN KEY (team_id)
-                                      REFERENCES teams(id)
-                                      ON DELETE CASCADE,
+    CONSTRAINT fk_team_members_team
+        FOREIGN KEY (team_id)
+        REFERENCES teams(id)
+        ON DELETE CASCADE,
 
-                              CONSTRAINT fk_team_members_user
-                                  FOREIGN KEY (user_id)
-                                      REFERENCES users(id)
-                                      ON DELETE CASCADE
+    CONSTRAINT fk_team_members_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
 
@@ -85,23 +85,23 @@ CREATE TABLE team_members (
 -- ============================================================
 
 CREATE TABLE scenarios (
-                           id              BIGSERIAL PRIMARY KEY,
-                           name            VARCHAR(150) NOT NULL,
-                           description     TEXT,
-                           type            VARCHAR(50) NOT NULL,
-                           difficulty      VARCHAR(30),
-                           status          VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
-                           created_by      BIGINT,
-                           created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                           updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    name            VARCHAR(150) NOT NULL,
+    description     TEXT,
+    type            VARCHAR(50) NOT NULL,
+    difficulty      VARCHAR(30),
+    status          VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+    created_by      BIGINT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                           CONSTRAINT fk_scenarios_created_by
-                               FOREIGN KEY (created_by)
-                                   REFERENCES users(id)
-                                   ON DELETE SET NULL,
+    CONSTRAINT fk_scenarios_created_by
+        FOREIGN KEY (created_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL,
 
-                           CONSTRAINT chk_scenarios_status
-                               CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED'))
+    CONSTRAINT chk_scenarios_status
+        CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED'))
 );
 
 
@@ -111,28 +111,28 @@ CREATE TABLE scenarios (
 -- ============================================================
 
 CREATE TABLE defensive_tasks (
-                                 id              BIGSERIAL PRIMARY KEY,
-                                 scenario_id     BIGINT NOT NULL,
-                                 name            VARCHAR(150) NOT NULL,
-                                 description     TEXT,
-                                 task_type       VARCHAR(50) NOT NULL,
-                                 sequence_order  INTEGER NOT NULL DEFAULT 1,
-                                 max_score       NUMERIC(5,2) NOT NULL DEFAULT 0,
-                                 required        BOOLEAN NOT NULL DEFAULT TRUE,
+    id              BIGSERIAL PRIMARY KEY,
+    scenario_id     BIGINT NOT NULL,
+    name            VARCHAR(150) NOT NULL,
+    description     TEXT,
+    task_type       VARCHAR(50) NOT NULL,
+    sequence_order  INTEGER NOT NULL DEFAULT 1,
+    max_score       NUMERIC(5,2) NOT NULL DEFAULT 0,
+    required        BOOLEAN NOT NULL DEFAULT TRUE,
 
-                                 CONSTRAINT fk_defensive_tasks_scenario
-                                     FOREIGN KEY (scenario_id)
-                                         REFERENCES scenarios(id)
-                                         ON DELETE CASCADE,
+    CONSTRAINT fk_defensive_tasks_scenario
+        FOREIGN KEY (scenario_id)
+        REFERENCES scenarios(id)
+        ON DELETE CASCADE,
 
-                                 CONSTRAINT chk_defensive_tasks_sequence
-                                     CHECK (sequence_order > 0),
+    CONSTRAINT chk_defensive_tasks_sequence
+        CHECK (sequence_order > 0),
 
-                                 CONSTRAINT chk_defensive_tasks_score
-                                     CHECK (max_score >= 0),
+    CONSTRAINT chk_defensive_tasks_score
+        CHECK (max_score >= 0),
 
-                                 CONSTRAINT uq_defensive_task_order
-                                     UNIQUE (scenario_id, sequence_order)
+    CONSTRAINT uq_defensive_task_order
+        UNIQUE (scenario_id, sequence_order)
 );
 
 
@@ -142,20 +142,20 @@ CREATE TABLE defensive_tasks (
 -- ============================================================
 
 CREATE TABLE assessment_criteria (
-                                     id                  BIGSERIAL PRIMARY KEY,
-                                     defensive_task_id   BIGINT NOT NULL,
-                                     name                VARCHAR(150) NOT NULL,
-                                     description         TEXT,
-                                     criterion_type      VARCHAR(50) NOT NULL,
-                                     max_score           NUMERIC(5,2) NOT NULL,
+    id                  BIGSERIAL PRIMARY KEY,
+    defensive_task_id   BIGINT NOT NULL,
+    name                VARCHAR(150) NOT NULL,
+    description         TEXT,
+    criterion_type      VARCHAR(50) NOT NULL,
+    max_score           NUMERIC(5,2) NOT NULL,
 
-                                     CONSTRAINT fk_assessment_criteria_task
-                                         FOREIGN KEY (defensive_task_id)
-                                             REFERENCES defensive_tasks(id)
-                                             ON DELETE CASCADE,
+    CONSTRAINT fk_assessment_criteria_task
+        FOREIGN KEY (defensive_task_id)
+        REFERENCES defensive_tasks(id)
+        ON DELETE CASCADE,
 
-                                     CONSTRAINT chk_assessment_criteria_score
-                                         CHECK (max_score >= 0)
+    CONSTRAINT chk_assessment_criteria_score
+        CHECK (max_score >= 0)
 );
 
 
@@ -165,15 +165,15 @@ CREATE TABLE assessment_criteria (
 -- ============================================================
 
 CREATE TABLE cyber_ranges (
-                              id              BIGSERIAL PRIMARY KEY,
-                              name            VARCHAR(150) NOT NULL UNIQUE,
-                              description     TEXT,
-                              environment_type VARCHAR(50),
-                              status          VARCHAR(30) NOT NULL DEFAULT 'INACTIVE',
-                              created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id                  BIGSERIAL PRIMARY KEY,
+    name                VARCHAR(150) NOT NULL UNIQUE,
+    description         TEXT,
+    environment_type    VARCHAR(50),
+    status              VARCHAR(30) NOT NULL DEFAULT 'INACTIVE',
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                              CONSTRAINT chk_cyber_ranges_status
-                                  CHECK (status IN ('ACTIVE', 'INACTIVE', 'MAINTENANCE'))
+    CONSTRAINT chk_cyber_ranges_status
+        CHECK (status IN ('ACTIVE', 'INACTIVE', 'MAINTENANCE'))
 );
 
 
@@ -183,22 +183,28 @@ CREATE TABLE cyber_ranges (
 -- ============================================================
 
 CREATE TABLE assets (
-                        id              BIGSERIAL PRIMARY KEY,
-                        cyber_range_id  BIGINT NOT NULL,
-                        name            VARCHAR(150) NOT NULL,
-                        asset_type      VARCHAR(50) NOT NULL,
-                        hostname        VARCHAR(255),
-                        ip_address      INET,
-                        os              VARCHAR(100),
-                        status          VARCHAR(30) NOT NULL DEFAULT 'OFFLINE',
+    id              BIGSERIAL PRIMARY KEY,
+    cyber_range_id  BIGINT NOT NULL,
+    name            VARCHAR(150) NOT NULL,
+    asset_type      VARCHAR(50) NOT NULL,
+    hostname        VARCHAR(255),
+    ip_address      INET,
+    os              VARCHAR(100),
+    status          VARCHAR(30) NOT NULL DEFAULT 'OFFLINE',
 
-                        CONSTRAINT fk_assets_cyber_range
-                            FOREIGN KEY (cyber_range_id)
-                                REFERENCES cyber_ranges(id)
-                                ON DELETE CASCADE,
+    CONSTRAINT fk_assets_cyber_range
+        FOREIGN KEY (cyber_range_id)
+        REFERENCES cyber_ranges(id)
+        ON DELETE CASCADE,
 
-                        CONSTRAINT chk_assets_status
-                            CHECK (status IN ('ONLINE', 'OFFLINE', 'MAINTENANCE'))
+    CONSTRAINT chk_assets_status
+        CHECK (status IN ('ONLINE', 'OFFLINE', 'MAINTENANCE')),
+
+    -- An IP address must be unique within the same Cyber Range.
+    -- Different Cyber Ranges may use the same IP address.
+    -- PostgreSQL allows multiple NULL values under this UNIQUE constraint.
+    CONSTRAINT uq_assets_range_ip
+        UNIQUE (cyber_range_id, ip_address)
 );
 
 
@@ -208,74 +214,79 @@ CREATE TABLE assets (
 -- ============================================================
 
 CREATE TABLE services (
-                          id              BIGSERIAL PRIMARY KEY,
-                          asset_id        BIGINT NOT NULL,
-                          name            VARCHAR(150) NOT NULL,
-                          service_type    VARCHAR(50) NOT NULL,
-                          port            INTEGER,
-                          protocol        VARCHAR(20),
-                          status          VARCHAR(30) NOT NULL DEFAULT 'STOPPED',
+    id              BIGSERIAL PRIMARY KEY,
+    asset_id        BIGINT NOT NULL,
+    name            VARCHAR(150) NOT NULL,
+    service_type    VARCHAR(50) NOT NULL,
+    port            INTEGER,
+    protocol        VARCHAR(20),
+    status          VARCHAR(30) NOT NULL DEFAULT 'STOPPED',
 
-                          CONSTRAINT fk_services_asset
-                              FOREIGN KEY (asset_id)
-                                  REFERENCES assets(id)
-                                  ON DELETE CASCADE,
+    CONSTRAINT fk_services_asset
+        FOREIGN KEY (asset_id)
+        REFERENCES assets(id)
+        ON DELETE CASCADE,
 
-                          CONSTRAINT chk_services_port
-                              CHECK (port IS NULL OR (port >= 1 AND port <= 65535)),
+    CONSTRAINT chk_services_port
+        CHECK (port IS NULL OR (port >= 1 AND port <= 65535)),
 
-                          CONSTRAINT chk_services_status
-                              CHECK (status IN ('RUNNING', 'STOPPED', 'FAILED'))
+    CONSTRAINT chk_services_status
+        CHECK (status IN ('RUNNING', 'STOPPED', 'FAILED'))
 );
 
 
 -- ============================================================
 -- 11. EXERCISES
 -- Actual execution of a scenario
+--
+-- RESET is an action, not a persisted status.
+-- After a successful reset, the Exercise returns to READY.
+-- If environment initialization fails, it returns to CREATED.
 -- ============================================================
 
 CREATE TABLE exercises (
-                           id              BIGSERIAL PRIMARY KEY,
-                           scenario_id     BIGINT NOT NULL,
-                           cyber_range_id  BIGINT NOT NULL,
-                           name            VARCHAR(150) NOT NULL,
-                           status          VARCHAR(30) NOT NULL DEFAULT 'CREATED',
-                           started_at      TIMESTAMPTZ,
-                           ended_at        TIMESTAMPTZ,
-                           created_by      BIGINT,
-                           created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    scenario_id     BIGINT NOT NULL,
+    cyber_range_id  BIGINT NOT NULL,
+    name            VARCHAR(150) NOT NULL,
+    status          VARCHAR(30) NOT NULL DEFAULT 'CREATED',
+    started_at      TIMESTAMPTZ,
+    ended_at        TIMESTAMPTZ,
+    created_by      BIGINT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                           CONSTRAINT fk_exercises_scenario
-                               FOREIGN KEY (scenario_id)
-                                   REFERENCES scenarios(id),
+    CONSTRAINT fk_exercises_scenario
+        FOREIGN KEY (scenario_id)
+        REFERENCES scenarios(id),
 
-                           CONSTRAINT fk_exercises_cyber_range
-                               FOREIGN KEY (cyber_range_id)
-                                   REFERENCES cyber_ranges(id),
+    CONSTRAINT fk_exercises_cyber_range
+        FOREIGN KEY (cyber_range_id)
+        REFERENCES cyber_ranges(id),
 
-                           CONSTRAINT fk_exercises_created_by
-                               FOREIGN KEY (created_by)
-                                   REFERENCES users(id)
-                                   ON DELETE SET NULL,
+    CONSTRAINT fk_exercises_created_by
+        FOREIGN KEY (created_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL,
 
-                           CONSTRAINT chk_exercises_status
-                               CHECK (
-                                   status IN (
-                                              'CREATED',
-                                              'RUNNING',
-                                              'PAUSED',
-                                              'COMPLETED',
-                                              'CANCELLED',
-                                              'RESET'
-                                       )
-                                   ),
+    CONSTRAINT chk_exercises_status
+        CHECK (
+            status IN (
+                'CREATED',
+                'READY',
+                'RUNNING',
+                'PAUSED',
+                'STOPPED',
+                'COMPLETED',
+                'CANCELLED'
+            )
+        ),
 
-                           CONSTRAINT chk_exercises_time
-                               CHECK (
-                                   ended_at IS NULL
-                                       OR started_at IS NULL
-                                       OR ended_at >= started_at
-                                   )
+    CONSTRAINT chk_exercises_time
+        CHECK (
+            ended_at IS NULL
+            OR started_at IS NULL
+            OR ended_at >= started_at
+        )
 );
 
 
@@ -287,33 +298,33 @@ CREATE TABLE exercises (
 -- ============================================================
 
 CREATE TABLE exercise_participants (
-                                       id              BIGSERIAL PRIMARY KEY,
-                                       exercise_id     BIGINT NOT NULL,
-                                       user_id         BIGINT NOT NULL,
-                                       team_id         BIGINT,
-                                       role            VARCHAR(20) NOT NULL,
-                                       joined_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    exercise_id     BIGINT NOT NULL,
+    user_id         BIGINT NOT NULL,
+    team_id         BIGINT,
+    role            VARCHAR(20) NOT NULL,
+    joined_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                                       CONSTRAINT fk_exercise_participants_exercise
-                                           FOREIGN KEY (exercise_id)
-                                               REFERENCES exercises(id)
-                                               ON DELETE CASCADE,
+    CONSTRAINT fk_exercise_participants_exercise
+        FOREIGN KEY (exercise_id)
+        REFERENCES exercises(id)
+        ON DELETE CASCADE,
 
-                                       CONSTRAINT fk_exercise_participants_user
-                                           FOREIGN KEY (user_id)
-                                               REFERENCES users(id)
-                                               ON DELETE CASCADE,
+    CONSTRAINT fk_exercise_participants_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
 
-                                       CONSTRAINT fk_exercise_participants_team
-                                           FOREIGN KEY (team_id)
-                                               REFERENCES teams(id)
-                                               ON DELETE SET NULL,
+    CONSTRAINT fk_exercise_participants_team
+        FOREIGN KEY (team_id)
+        REFERENCES teams(id)
+        ON DELETE SET NULL,
 
-                                       CONSTRAINT chk_exercise_participants_role
-                                           CHECK (role IN ('RED', 'BLUE', 'WHITE')),
+    CONSTRAINT chk_exercise_participants_role
+        CHECK (role IN ('RED', 'BLUE', 'WHITE')),
 
-                                       CONSTRAINT uq_exercise_participant
-                                           UNIQUE (exercise_id, user_id)
+    CONSTRAINT uq_exercise_participant
+        UNIQUE (exercise_id, user_id)
 );
 
 
@@ -323,31 +334,31 @@ CREATE TABLE exercise_participants (
 -- ============================================================
 
 CREATE TABLE events (
-                        id              BIGSERIAL PRIMARY KEY,
-                        exercise_id     BIGINT NOT NULL,
-                        asset_id        BIGINT,
-                        service_id      BIGINT,
-                        event_type      VARCHAR(50) NOT NULL,
-                        severity        VARCHAR(20),
-                        event_timestamp TIMESTAMPTZ NOT NULL,
-                        source          VARCHAR(100),
-                        data            JSONB,
-                        created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    exercise_id     BIGINT NOT NULL,
+    asset_id        BIGINT,
+    service_id      BIGINT,
+    event_type      VARCHAR(50) NOT NULL,
+    severity        VARCHAR(20),
+    event_timestamp TIMESTAMPTZ NOT NULL,
+    source          VARCHAR(100),
+    data            JSONB,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                        CONSTRAINT fk_events_exercise
-                            FOREIGN KEY (exercise_id)
-                                REFERENCES exercises(id)
-                                ON DELETE CASCADE,
+    CONSTRAINT fk_events_exercise
+        FOREIGN KEY (exercise_id)
+        REFERENCES exercises(id)
+        ON DELETE CASCADE,
 
-                        CONSTRAINT fk_events_asset
-                            FOREIGN KEY (asset_id)
-                                REFERENCES assets(id)
-                                ON DELETE SET NULL,
+    CONSTRAINT fk_events_asset
+        FOREIGN KEY (asset_id)
+        REFERENCES assets(id)
+        ON DELETE SET NULL,
 
-                        CONSTRAINT fk_events_service
-                            FOREIGN KEY (service_id)
-                                REFERENCES services(id)
-                                ON DELETE SET NULL
+    CONSTRAINT fk_events_service
+        FOREIGN KEY (service_id)
+        REFERENCES services(id)
+        ON DELETE SET NULL
 );
 
 
@@ -357,22 +368,22 @@ CREATE TABLE events (
 -- ============================================================
 
 CREATE TABLE evidence (
-                          id              BIGSERIAL PRIMARY KEY,
-                          exercise_id     BIGINT NOT NULL,
-                          event_id        BIGINT,
-                          evidence_type   VARCHAR(50) NOT NULL,
-                          data            JSONB,
-                          created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    exercise_id     BIGINT NOT NULL,
+    event_id        BIGINT,
+    evidence_type   VARCHAR(50) NOT NULL,
+    data            JSONB,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                          CONSTRAINT fk_evidence_exercise
-                              FOREIGN KEY (exercise_id)
-                                  REFERENCES exercises(id)
-                                  ON DELETE CASCADE,
+    CONSTRAINT fk_evidence_exercise
+        FOREIGN KEY (exercise_id)
+        REFERENCES exercises(id)
+        ON DELETE CASCADE,
 
-                          CONSTRAINT fk_evidence_event
-                              FOREIGN KEY (event_id)
-                                  REFERENCES events(id)
-                                  ON DELETE SET NULL
+    CONSTRAINT fk_evidence_event
+        FOREIGN KEY (event_id)
+        REFERENCES events(id)
+        ON DELETE SET NULL
 );
 
 
@@ -383,128 +394,129 @@ CREATE TABLE evidence (
 -- ============================================================
 
 CREATE TABLE assessments (
-                             id              BIGSERIAL PRIMARY KEY,
-                             exercise_id     BIGINT NOT NULL UNIQUE,
-                             status          VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-                             total_score     NUMERIC(7,2) NOT NULL DEFAULT 0,
-                             started_at      TIMESTAMPTZ,
-                             completed_at    TIMESTAMPTZ,
-                             review_status   VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-                             reviewed_by     BIGINT,
-                             reviewed_at     TIMESTAMPTZ,
-                             review_comment  TEXT,
-                             created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              BIGSERIAL PRIMARY KEY,
+    exercise_id     BIGINT NOT NULL UNIQUE,
+    status          VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    total_score     NUMERIC(7,2) NOT NULL DEFAULT 0,
+    started_at      TIMESTAMPTZ,
+    completed_at    TIMESTAMPTZ,
+    review_status   VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    reviewed_by     BIGINT,
+    reviewed_at     TIMESTAMPTZ,
+    review_comment  TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                             CONSTRAINT fk_assessments_exercise
-                                 FOREIGN KEY (exercise_id)
-                                     REFERENCES exercises(id)
-                                     ON DELETE CASCADE,
+    CONSTRAINT fk_assessments_exercise
+        FOREIGN KEY (exercise_id)
+        REFERENCES exercises(id)
+        ON DELETE CASCADE,
 
-                             CONSTRAINT fk_assessments_reviewed_by
-                                 FOREIGN KEY (reviewed_by)
-                                     REFERENCES users(id)
-                                     ON DELETE SET NULL,
+    CONSTRAINT fk_assessments_reviewed_by
+        FOREIGN KEY (reviewed_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL,
 
-                             CONSTRAINT chk_assessments_status
-                                 CHECK (
-                                     status IN (
-                                                'PENDING',
-                                                'RUNNING',
-                                                'COMPLETED',
-                                                'FAILED'
-                                         )
-                                     ),
+    CONSTRAINT chk_assessments_status
+        CHECK (
+            status IN (
+                'PENDING',
+                'RUNNING',
+                'COMPLETED',
+                'FAILED'
+            )
+        ),
 
-                             CONSTRAINT chk_assessments_review_status
-                                 CHECK (
-                                     review_status IN (
-                                                       'PENDING',
-                                                       'REVIEWED'
-                                         )
-                                     ),
+    CONSTRAINT chk_assessments_review_status
+        CHECK (review_status IN ('PENDING', 'REVIEWED')),
 
-                             CONSTRAINT chk_assessments_score
-                                 CHECK (total_score >= 0)
+    CONSTRAINT chk_assessments_score
+        CHECK (total_score >= 0)
 );
 
 
 -- ============================================================
 -- 16. ASSESSMENT RESULTS
 -- Result of each defensive task
+--
+-- NOT_APPLICABLE tasks are excluded from the Exercise's
+-- maximum possible score.
+-- FAILED means the task requirement was not met; partial
+-- points may still be awarded through assessment criteria.
 -- ============================================================
 
 CREATE TABLE assessment_results (
-                                    id                  BIGSERIAL PRIMARY KEY,
-                                    assessment_id       BIGINT NOT NULL,
-                                    defensive_task_id   BIGINT NOT NULL,
-                                    status              VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-                                    detected_at         TIMESTAMPTZ,
-                                    responded_at        TIMESTAMPTZ,
-                                    completed_at        TIMESTAMPTZ,
-                                    detection_time      INTERVAL,
-                                    response_time       INTERVAL,
-                                    reason              TEXT,
+    id                  BIGSERIAL PRIMARY KEY,
+    assessment_id       BIGINT NOT NULL,
+    defensive_task_id   BIGINT NOT NULL,
+    status              VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    detected_at         TIMESTAMPTZ,
+    responded_at        TIMESTAMPTZ,
+    completed_at        TIMESTAMPTZ,
+    detection_time      INTERVAL,
+    response_time       INTERVAL,
+    reason              TEXT,
 
-                                    CONSTRAINT fk_assessment_results_assessment
-                                        FOREIGN KEY (assessment_id)
-                                            REFERENCES assessments(id)
-                                            ON DELETE CASCADE,
+    CONSTRAINT fk_assessment_results_assessment
+        FOREIGN KEY (assessment_id)
+        REFERENCES assessments(id)
+        ON DELETE CASCADE,
 
-                                    CONSTRAINT fk_assessment_results_task
-                                        FOREIGN KEY (defensive_task_id)
-                                            REFERENCES defensive_tasks(id)
-                                            ON DELETE CASCADE,
+    CONSTRAINT fk_assessment_results_task
+        FOREIGN KEY (defensive_task_id)
+        REFERENCES defensive_tasks(id)
+        ON DELETE CASCADE,
 
-                                    CONSTRAINT chk_assessment_results_status
-                                        CHECK (
-                                            status IN (
-                                                       'PENDING',
-                                                       'IN_PROGRESS',
-                                                       'COMPLETED',
-                                                       'FAILED',
-                                                       'NOT_APPLICABLE'
-                                                )
-                                            ),
+    CONSTRAINT chk_assessment_results_status
+        CHECK (
+            status IN (
+                'PENDING',
+                'IN_PROGRESS',
+                'COMPLETED',
+                'FAILED',
+                'NOT_APPLICABLE'
+            )
+        ),
 
-                                    CONSTRAINT uq_assessment_task
-                                        UNIQUE (assessment_id, defensive_task_id)
+    CONSTRAINT uq_assessment_task
+        UNIQUE (assessment_id, defensive_task_id)
 );
 
 
 -- ============================================================
 -- 17. ASSESSMENT SCORES
 -- Detailed score awarded for each criterion
+-- max_score stores a snapshot of the criterion's maximum score.
 -- ============================================================
 
 CREATE TABLE assessment_scores (
-                                   id                      BIGSERIAL PRIMARY KEY,
-                                   assessment_result_id    BIGINT NOT NULL,
-                                   criterion_id            BIGINT NOT NULL,
-                                   awarded_score           NUMERIC(5,2) NOT NULL DEFAULT 0,
-                                   max_score               NUMERIC(5,2) NOT NULL,
-                                   reason                  TEXT,
+    id                      BIGSERIAL PRIMARY KEY,
+    assessment_result_id    BIGINT NOT NULL,
+    criterion_id            BIGINT NOT NULL,
+    awarded_score           NUMERIC(5,2) NOT NULL DEFAULT 0,
+    max_score               NUMERIC(5,2) NOT NULL,
+    reason                  TEXT,
 
-                                   CONSTRAINT fk_assessment_scores_result
-                                       FOREIGN KEY (assessment_result_id)
-                                           REFERENCES assessment_results(id)
-                                           ON DELETE CASCADE,
+    CONSTRAINT fk_assessment_scores_result
+        FOREIGN KEY (assessment_result_id)
+        REFERENCES assessment_results(id)
+        ON DELETE CASCADE,
 
-                                   CONSTRAINT fk_assessment_scores_criterion
-                                       FOREIGN KEY (criterion_id)
-                                           REFERENCES assessment_criteria(id)
-                                           ON DELETE CASCADE,
+    CONSTRAINT fk_assessment_scores_criterion
+        FOREIGN KEY (criterion_id)
+        REFERENCES assessment_criteria(id)
+        ON DELETE CASCADE,
 
-                                   CONSTRAINT chk_assessment_scores_awarded
-                                       CHECK (awarded_score >= 0),
+    CONSTRAINT chk_assessment_scores_awarded
+        CHECK (awarded_score >= 0),
 
-                                   CONSTRAINT chk_assessment_scores_max
-                                       CHECK (max_score >= 0),
+    CONSTRAINT chk_assessment_scores_max
+        CHECK (max_score >= 0),
 
-                                   CONSTRAINT chk_assessment_scores_range
-                                       CHECK (awarded_score <= max_score),
+    CONSTRAINT chk_assessment_scores_range
+        CHECK (awarded_score <= max_score),
 
-                                   CONSTRAINT uq_assessment_result_criterion
-                                       UNIQUE (assessment_result_id, criterion_id)
+    CONSTRAINT uq_assessment_result_criterion
+        UNIQUE (assessment_result_id, criterion_id)
 );
 
 
@@ -514,40 +526,34 @@ CREATE TABLE assessment_scores (
 -- ============================================================
 
 CREATE TABLE incident_reports (
-                                  id              BIGSERIAL PRIMARY KEY,
-                                  exercise_id     BIGINT NOT NULL,
-                                  submitted_by    BIGINT NOT NULL,
-                                  title           VARCHAR(255) NOT NULL,
-                                  description     TEXT NOT NULL,
-                                  severity        VARCHAR(20),
-                                  status          VARCHAR(30) NOT NULL DEFAULT 'SUBMITTED',
-                                  submitted_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                  reviewed_by     BIGINT,
-                                  reviewed_at     TIMESTAMPTZ,
-                                  review_comment  TEXT,
+    id              BIGSERIAL PRIMARY KEY,
+    exercise_id     BIGINT NOT NULL,
+    submitted_by    BIGINT NOT NULL,
+    title           VARCHAR(255) NOT NULL,
+    description     TEXT NOT NULL,
+    severity        VARCHAR(20),
+    status          VARCHAR(30) NOT NULL DEFAULT 'SUBMITTED',
+    submitted_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by     BIGINT,
+    reviewed_at     TIMESTAMPTZ,
+    review_comment  TEXT,
 
-                                  CONSTRAINT fk_incident_reports_exercise
-                                      FOREIGN KEY (exercise_id)
-                                          REFERENCES exercises(id)
-                                          ON DELETE CASCADE,
+    CONSTRAINT fk_incident_reports_exercise
+        FOREIGN KEY (exercise_id)
+        REFERENCES exercises(id)
+        ON DELETE CASCADE,
 
-                                  CONSTRAINT fk_incident_reports_submitted_by
-                                      FOREIGN KEY (submitted_by)
-                                          REFERENCES users(id),
+    CONSTRAINT fk_incident_reports_submitted_by
+        FOREIGN KEY (submitted_by)
+        REFERENCES users(id),
 
-                                  CONSTRAINT fk_incident_reports_reviewed_by
-                                      FOREIGN KEY (reviewed_by)
-                                          REFERENCES users(id)
-                                          ON DELETE SET NULL,
+    CONSTRAINT fk_incident_reports_reviewed_by
+        FOREIGN KEY (reviewed_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL,
 
-                                  CONSTRAINT chk_incident_reports_status
-                                      CHECK (
-                                          status IN (
-                                                     'DRAFT',
-                                                     'SUBMITTED',
-                                                     'REVIEWED'
-                                              )
-                                          )
+    CONSTRAINT chk_incident_reports_status
+        CHECK (status IN ('DRAFT', 'SUBMITTED', 'REVIEWED'))
 );
 
 
@@ -557,18 +563,18 @@ CREATE TABLE incident_reports (
 -- ============================================================
 
 CREATE TABLE audit_logs (
-                            id              BIGSERIAL PRIMARY KEY,
-                            user_id         BIGINT,
-                            action          VARCHAR(100) NOT NULL,
-                            entity_type     VARCHAR(100),
-                            entity_id       BIGINT,
-                            created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            metadata        JSONB,
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT,
+    action          VARCHAR(100) NOT NULL,
+    entity_type     VARCHAR(100),
+    entity_id       BIGINT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metadata        JSONB,
 
-                            CONSTRAINT fk_audit_logs_user
-                                FOREIGN KEY (user_id)
-                                    REFERENCES users(id)
-                                    ON DELETE SET NULL
+    CONSTRAINT fk_audit_logs_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE SET NULL
 );
 
 

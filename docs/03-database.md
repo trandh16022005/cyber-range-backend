@@ -171,27 +171,27 @@ WHITE
 
 Database V1 gồm 19 bảng:
 
-| #  | Table                   | Purpose                         |
-| -- | ----------------------- | ------------------------------- |
-| 1  | `roles`                 | System-level roles              |
-| 2  | `users`                 | User accounts                   |
-| 3  | `teams`                 | User groups                     |
-| 4  | `team_members`          | User-Team relationship          |
-| 5  | `scenarios`             | Scenario templates              |
-| 6  | `defensive_tasks`       | Blue Team tasks                 |
-| 7  | `assessment_criteria`   | Assessment/scoring criteria     |
-| 8  | `cyber_ranges`          | Cyber Range environments        |
-| 9  | `assets`                | Machines and other assets       |
-| 10 | `services`              | Services running on assets      |
-| 11 | `exercises`             | Scenario execution              |
+| # | Table | Purpose |
+|---|---|---|
+| 1 | `roles` | System-level roles |
+| 2 | `users` | User accounts |
+| 3 | `teams` | User groups |
+| 4 | `team_members` | User-Team relationship |
+| 5 | `scenarios` | Scenario templates |
+| 6 | `defensive_tasks` | Blue Team tasks |
+| 7 | `assessment_criteria` | Assessment/scoring criteria |
+| 8 | `cyber_ranges` | Cyber Range environments |
+| 9 | `assets` | Machines and other assets |
+| 10 | `services` | Services running on assets |
+| 11 | `exercises` | Scenario execution |
 | 12 | `exercise_participants` | Exercise participants and roles |
-| 13 | `events`                | Raw/observed events             |
-| 14 | `evidence`              | Assessment-relevant evidence    |
-| 15 | `assessments`           | Exercise assessment             |
-| 16 | `assessment_results`    | Result per defensive task       |
-| 17 | `assessment_scores`     | Score per criterion             |
-| 18 | `incident_reports`      | Blue Team reports               |
-| 19 | `audit_logs`            | System audit trail              |
+| 13 | `events` | Raw/observed events |
+| 14 | `evidence` | Assessment-relevant evidence |
+| 15 | `assessments` | Exercise assessment |
+| 16 | `assessment_results` | Result per defensive task |
+| 17 | `assessment_scores` | Score per criterion |
+| 18 | `incident_reports` | Blue Team reports |
+| 19 | `audit_logs` | System audit trail |
 
 ---
 
@@ -663,36 +663,36 @@ UPDATE_SCENARIO
 
 # 9. Foreign Key Summary
 
-| Table                   | Foreign Key            | References               |
-| ----------------------- | ---------------------- | ------------------------ |
-| `users`                 | `role_id`              | `roles.id`               |
-| `team_members`          | `user_id`              | `users.id`               |
-| `team_members`          | `team_id`              | `teams.id`               |
-| `defensive_tasks`       | `scenario_id`          | `scenarios.id`           |
-| `assessment_criteria`   | `defensive_task_id`    | `defensive_tasks.id`     |
-| `assets`                | `cyber_range_id`       | `cyber_ranges.id`        |
-| `services`              | `asset_id`             | `assets.id`              |
-| `exercises`             | `scenario_id`          | `scenarios.id`           |
-| `exercises`             | `cyber_range_id`       | `cyber_ranges.id`        |
-| `exercises`             | `created_by`           | `users.id`               |
-| `exercise_participants` | `exercise_id`          | `exercises.id`           |
-| `exercise_participants` | `user_id`              | `users.id`               |
-| `exercise_participants` | `team_id`              | `teams.id`               |
-| `events`                | `exercise_id`          | `exercises.id`           |
-| `events`                | `asset_id`             | `assets.id`              |
-| `events`                | `service_id`           | `services.id`            |
-| `evidence`              | `exercise_id`          | `exercises.id`           |
-| `evidence`              | `event_id`             | `events.id`              |
-| `assessments`           | `exercise_id`          | `exercises.id`           |
-| `assessments`           | `reviewed_by`          | `users.id`               |
-| `assessment_results`    | `assessment_id`        | `assessments.id`         |
-| `assessment_results`    | `defensive_task_id`    | `defensive_tasks.id`     |
-| `assessment_scores`     | `assessment_result_id` | `assessment_results.id`  |
-| `assessment_scores`     | `criterion_id`         | `assessment_criteria.id` |
-| `incident_reports`      | `exercise_id`          | `exercises.id`           |
-| `incident_reports`      | `submitted_by`         | `users.id`               |
-| `incident_reports`      | `reviewed_by`          | `users.id`               |
-| `audit_logs`            | `user_id`              | `users.id`               |
+| Table | Foreign Key | References |
+|---|---|---|
+| `users` | `role_id` | `roles.id` |
+| `team_members` | `user_id` | `users.id` |
+| `team_members` | `team_id` | `teams.id` |
+| `defensive_tasks` | `scenario_id` | `scenarios.id` |
+| `assessment_criteria` | `defensive_task_id` | `defensive_tasks.id` |
+| `assets` | `cyber_range_id` | `cyber_ranges.id` |
+| `services` | `asset_id` | `assets.id` |
+| `exercises` | `scenario_id` | `scenarios.id` |
+| `exercises` | `cyber_range_id` | `cyber_ranges.id` |
+| `exercises` | `created_by` | `users.id` |
+| `exercise_participants` | `exercise_id` | `exercises.id` |
+| `exercise_participants` | `user_id` | `users.id` |
+| `exercise_participants` | `team_id` | `teams.id` |
+| `events` | `exercise_id` | `exercises.id` |
+| `events` | `asset_id` | `assets.id` |
+| `events` | `service_id` | `services.id` |
+| `evidence` | `exercise_id` | `exercises.id` |
+| `evidence` | `event_id` | `events.id` |
+| `assessments` | `exercise_id` | `exercises.id` |
+| `assessments` | `reviewed_by` | `users.id` |
+| `assessment_results` | `assessment_id` | `assessments.id` |
+| `assessment_results` | `defensive_task_id` | `defensive_tasks.id` |
+| `assessment_scores` | `assessment_result_id` | `assessment_results.id` |
+| `assessment_scores` | `criterion_id` | `assessment_criteria.id` |
+| `incident_reports` | `exercise_id` | `exercises.id` |
+| `incident_reports` | `submitted_by` | `users.id` |
+| `incident_reports` | `reviewed_by` | `users.id` |
+| `audit_logs` | `user_id` | `users.id` |
 
 ---
 
@@ -746,19 +746,19 @@ exercises 1 ─── 1 assessments
 users N ─── N teams
 ```
 
-thông qua:
+Thông qua:
 
 ```text
 team_members
 ```
 
-và:
+Và:
 
 ```text
 users N ─── N exercises
 ```
 
-thông qua:
+Thông qua:
 
 ```text
 exercise_participants
@@ -772,12 +772,12 @@ exercise_participants
 
 Purpose: System-level authorization roles.
 
-| Column        | Type        | Constraint       | Description      |
-| ------------- | ----------- | ---------------- | ---------------- |
-| `id`          | BIGSERIAL   | PK               | Role ID          |
-| `name`        | VARCHAR(50) | UNIQUE, NOT NULL | Role name        |
-| `description` | TEXT        |                  | Role description |
-| `created_at`  | TIMESTAMPTZ | NOT NULL         | Creation time    |
+| Column | Type | Constraint | Description |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Role ID |
+| `name` | VARCHAR(50) | UNIQUE, NOT NULL | Role name |
+| `description` | TEXT | | Role description |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Creation time |
 
 Initial roles:
 
@@ -795,17 +795,17 @@ Exercise roles such as `RED`, `BLUE`, `WHITE` are not stored here.
 
 Purpose: User accounts.
 
-| Column          | Type         | Constraint       | Description    |
-| --------------- | ------------ | ---------------- | -------------- |
-| `id`            | BIGSERIAL    | PK               | User ID        |
-| `role_id`       | BIGINT       | FK, NOT NULL     | System role    |
-| `username`      | VARCHAR(100) | UNIQUE, NOT NULL | Login username |
-| `email`         | VARCHAR(255) | UNIQUE, NOT NULL | Email          |
-| `password_hash` | VARCHAR(255) | NOT NULL         | Password hash  |
-| `full_name`     | VARCHAR(255) | NOT NULL         | Display name   |
-| `status`        | VARCHAR(30)  | NOT NULL         | Account status |
-| `created_at`    | TIMESTAMPTZ  | NOT NULL         | Creation time  |
-| `updated_at`    | TIMESTAMPTZ  | NOT NULL         | Last update    |
+| Column | Type | Constraint | Description |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | User ID |
+| `role_id` | BIGINT | FK, NOT NULL | System role |
+| `username` | VARCHAR(100) | UNIQUE, NOT NULL | Login username |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL | Email |
+| `password_hash` | VARCHAR(255) | NOT NULL | Password hash |
+| `full_name` | VARCHAR(255) | NOT NULL | Display name |
+| `status` | VARCHAR(30) | NOT NULL | Account status |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Creation time |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Last update |
 
 ---
 
@@ -813,12 +813,12 @@ Purpose: User accounts.
 
 Purpose: Groups of users.
 
-| Column        | Type         | Constraint       | Description      |
-| ------------- | ------------ | ---------------- | ---------------- |
-| `id`          | BIGSERIAL    | PK               | Team ID          |
-| `name`        | VARCHAR(100) | UNIQUE, NOT NULL | Team name        |
-| `description` | TEXT         |                  | Team description |
-| `created_at`  | TIMESTAMPTZ  | NOT NULL         | Creation time    |
+| Column | Type | Constraint | Description |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Team ID |
+| `name` | VARCHAR(100) | UNIQUE, NOT NULL | Team name |
+| `description` | TEXT | | Team description |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Creation time |
 
 ---
 
@@ -826,11 +826,11 @@ Purpose: Groups of users.
 
 Purpose: N-N relationship between users and teams.
 
-| Column      | Type        | Constraint |
-| ----------- | ----------- | ---------- |
-| `team_id`   | BIGINT      | PK, FK     |
-| `user_id`   | BIGINT      | PK, FK     |
-| `joined_at` | TIMESTAMPTZ | NOT NULL   |
+| Column | Type | Constraint |
+|---|---|---|
+| `team_id` | BIGINT | PK, FK |
+| `user_id` | BIGINT | PK, FK |
+| `joined_at` | TIMESTAMPTZ | NOT NULL |
 
 Composite Primary Key:
 
@@ -844,17 +844,17 @@ Composite Primary Key:
 
 Purpose: Reusable Cyber Range exercise templates.
 
-| Column        | Type         | Constraint | Description          |
-| ------------- | ------------ | ---------- | -------------------- |
-| `id`          | BIGSERIAL    | PK         | Scenario ID          |
-| `name`        | VARCHAR(150) | NOT NULL   | Scenario name        |
-| `description` | TEXT         |            | Scenario description |
-| `type`        | VARCHAR(50)  | NOT NULL   | Scenario type        |
-| `difficulty`  | VARCHAR(30)  |            | Difficulty           |
-| `status`      | VARCHAR(30)  | NOT NULL   | Scenario lifecycle   |
-| `created_by`  | BIGINT       | FK         | Creator              |
-| `created_at`  | TIMESTAMPTZ  | NOT NULL   | Creation time        |
-| `updated_at`  | TIMESTAMPTZ  | NOT NULL   | Last update          |
+| Column | Type | Constraint | Description |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Scenario ID |
+| `name` | VARCHAR(150) | NOT NULL | Scenario name |
+| `description` | TEXT | | Scenario description |
+| `type` | VARCHAR(50) | NOT NULL | Scenario type |
+| `difficulty` | VARCHAR(30) | | Difficulty |
+| `status` | VARCHAR(30) | NOT NULL | Scenario lifecycle |
+| `created_by` | BIGINT | FK | Creator |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Creation time |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Last update |
 
 Initial scenario types:
 
@@ -870,16 +870,16 @@ WEB_ATTACK
 
 Purpose: Blue Team tasks belonging to a Scenario.
 
-| Column           | Type         | Constraint   |
-| ---------------- | ------------ | ------------ |
-| `id`             | BIGSERIAL    | PK           |
-| `scenario_id`    | BIGINT       | FK, NOT NULL |
-| `name`           | VARCHAR(150) | NOT NULL     |
-| `description`    | TEXT         |              |
-| `task_type`      | VARCHAR(50)  | NOT NULL     |
-| `sequence_order` | INTEGER      | NOT NULL     |
-| `max_score`      | NUMERIC(5,2) | NOT NULL     |
-| `required`       | BOOLEAN      | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `scenario_id` | BIGINT | FK, NOT NULL |
+| `name` | VARCHAR(150) | NOT NULL |
+| `description` | TEXT | |
+| `task_type` | VARCHAR(50) | NOT NULL |
+| `sequence_order` | INTEGER | NOT NULL |
+| `max_score` | NUMERIC(5,2) | NOT NULL |
+| `required` | BOOLEAN | NOT NULL |
 
 ---
 
@@ -887,14 +887,14 @@ Purpose: Blue Team tasks belonging to a Scenario.
 
 Purpose: Defines how a Defensive Task is scored.
 
-| Column              | Type         | Constraint   |
-| ------------------- | ------------ | ------------ |
-| `id`                | BIGSERIAL    | PK           |
-| `defensive_task_id` | BIGINT       | FK, NOT NULL |
-| `name`              | VARCHAR(150) | NOT NULL     |
-| `description`       | TEXT         |              |
-| `criterion_type`    | VARCHAR(50)  | NOT NULL     |
-| `max_score`         | NUMERIC(5,2) | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `defensive_task_id` | BIGINT | FK, NOT NULL |
+| `name` | VARCHAR(150) | NOT NULL |
+| `description` | TEXT | |
+| `criterion_type` | VARCHAR(50) | NOT NULL |
+| `max_score` | NUMERIC(5,2) | NOT NULL |
 
 ---
 
@@ -902,14 +902,14 @@ Purpose: Defines how a Defensive Task is scored.
 
 Purpose: Defines a Cyber Range environment.
 
-| Column             | Type         | Constraint       |
-| ------------------ | ------------ | ---------------- |
-| `id`               | BIGSERIAL    | PK               |
-| `name`             | VARCHAR(150) | UNIQUE, NOT NULL |
-| `description`      | TEXT         |                  |
-| `environment_type` | VARCHAR(50)  |                  |
-| `status`           | VARCHAR(30)  | NOT NULL         |
-| `created_at`       | TIMESTAMPTZ  | NOT NULL         |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `name` | VARCHAR(150) | UNIQUE, NOT NULL |
+| `description` | TEXT | |
+| `environment_type` | VARCHAR(50) | |
+| `status` | VARCHAR(30) | NOT NULL |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
 
 ---
 
@@ -917,16 +917,26 @@ Purpose: Defines a Cyber Range environment.
 
 Purpose: Represents machines and other Cyber Range assets.
 
-| Column           | Type         | Constraint   |
-| ---------------- | ------------ | ------------ |
-| `id`             | BIGSERIAL    | PK           |
-| `cyber_range_id` | BIGINT       | FK, NOT NULL |
-| `name`           | VARCHAR(150) | NOT NULL     |
-| `asset_type`     | VARCHAR(50)  | NOT NULL     |
-| `hostname`       | VARCHAR(255) |              |
-| `ip_address`     | INET         |              |
-| `os`             | VARCHAR(100) |              |
-| `status`         | VARCHAR(30)  | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `cyber_range_id` | BIGINT | FK, NOT NULL |
+| `name` | VARCHAR(150) | NOT NULL |
+| `asset_type` | VARCHAR(50) | NOT NULL |
+| `hostname` | VARCHAR(255) | |
+| `ip_address` | INET | |
+| `os` | VARCHAR(100) | |
+| `status` | VARCHAR(30) | NOT NULL |
+
+Allowed Asset statuses:
+
+```text
+ONLINE
+OFFLINE
+MAINTENANCE
+```
+
+`ONLINE` biểu thị Asset đang hoạt động; `OFFLINE` biểu thị Asset không hoạt động; `MAINTENANCE` biểu thị Asset đang được bảo trì.
 
 ---
 
@@ -934,15 +944,15 @@ Purpose: Represents machines and other Cyber Range assets.
 
 Purpose: Services running on Assets.
 
-| Column         | Type         | Constraint   |
-| -------------- | ------------ | ------------ |
-| `id`           | BIGSERIAL    | PK           |
-| `asset_id`     | BIGINT       | FK, NOT NULL |
-| `name`         | VARCHAR(150) | NOT NULL     |
-| `service_type` | VARCHAR(50)  | NOT NULL     |
-| `port`         | INTEGER      |              |
-| `protocol`     | VARCHAR(20)  |              |
-| `status`       | VARCHAR(30)  | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `asset_id` | BIGINT | FK, NOT NULL |
+| `name` | VARCHAR(150) | NOT NULL |
+| `service_type` | VARCHAR(50) | NOT NULL |
+| `port` | INTEGER | |
+| `protocol` | VARCHAR(20) | |
+| `status` | VARCHAR(30) | NOT NULL |
 
 ---
 
@@ -950,38 +960,61 @@ Purpose: Services running on Assets.
 
 Purpose: Actual execution of a Scenario.
 
-| Column           | Type         | Constraint   |
-| ---------------- | ------------ | ------------ |
-| `id`             | BIGSERIAL    | PK           |
-| `scenario_id`    | BIGINT       | FK, NOT NULL |
-| `cyber_range_id` | BIGINT       | FK, NOT NULL |
-| `name`           | VARCHAR(150) | NOT NULL     |
-| `status`         | VARCHAR(30)  | NOT NULL     |
-| `started_at`     | TIMESTAMPTZ  |              |
-| `ended_at`       | TIMESTAMPTZ  |              |
-| `created_by`     | BIGINT       | FK           |
-| `created_at`     | TIMESTAMPTZ  | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `scenario_id` | BIGINT | FK, NOT NULL |
+| `cyber_range_id` | BIGINT | FK, NOT NULL |
+| `name` | VARCHAR(150) | NOT NULL |
+| `status` | VARCHAR(30) | NOT NULL |
+| `started_at` | TIMESTAMPTZ | |
+| `ended_at` | TIMESTAMPTZ | |
+| `created_by` | BIGINT | FK |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
 
-Exercise lifecycle:
+Allowed Exercise statuses:
 
 ```text
 CREATED
-   ↓
+READY
 RUNNING
-   ↓
 PAUSED
-   ↓
-RUNNING
-   ↓
+STOPPED
 COMPLETED
+CANCELLED
 ```
 
-Alternative termination:
+Exercise lifecycle overview:
 
 ```text
-CANCELLED
-RESET
+CREATED
+   │
+   │ Environment initialized successfully
+   ▼
+READY
+   │
+   │ Start
+   ▼
+RUNNING
+   │
+   ├── Pause ───────► PAUSED
+   │                    │
+   │                    │ Resume
+   │                    ▼
+   │                 RUNNING
+   │
+   ├── Stop ────────► STOPPED
+   │
+   ├── Finish ──────► COMPLETED
+   │
+   └── Cancel ──────► CANCELLED
 ```
+
+`RESET` là một action, không phải một trạng thái được lưu trong database.
+
+Sau khi reset thành công và môi trường được khởi tạo lại, Exercise chuyển về `READY`. Nếu khởi tạo môi trường thất bại, Exercise chuyển về `CREATED`.
+
+Các chuyển đổi trạng thái và điều kiện hợp lệ phải được kiểm tra tại Application Service.
 
 ---
 
@@ -989,14 +1022,14 @@ RESET
 
 Purpose: Assign users and optional teams to an Exercise.
 
-| Column        | Type        | Constraint   |
-| ------------- | ----------- | ------------ |
-| `id`          | BIGSERIAL   | PK           |
-| `exercise_id` | BIGINT      | FK, NOT NULL |
-| `user_id`     | BIGINT      | FK, NOT NULL |
-| `team_id`     | BIGINT      | FK, nullable |
-| `role`        | VARCHAR(20) | NOT NULL     |
-| `joined_at`   | TIMESTAMPTZ | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `exercise_id` | BIGINT | FK, NOT NULL |
+| `user_id` | BIGINT | FK, NOT NULL |
+| `team_id` | BIGINT | FK, nullable |
+| `role` | VARCHAR(20) | NOT NULL |
+| `joined_at` | TIMESTAMPTZ | NOT NULL |
 
 Allowed exercise roles:
 
@@ -1012,18 +1045,18 @@ WHITE
 
 Purpose: Raw/observed events from the Cyber Range.
 
-| Column            | Type         | Constraint   |
-| ----------------- | ------------ | ------------ |
-| `id`              | BIGSERIAL    | PK           |
-| `exercise_id`     | BIGINT       | FK, NOT NULL |
-| `asset_id`        | BIGINT       | FK, nullable |
-| `service_id`      | BIGINT       | FK, nullable |
-| `event_type`      | VARCHAR(50)  | NOT NULL     |
-| `severity`        | VARCHAR(20)  |              |
-| `event_timestamp` | TIMESTAMPTZ  | NOT NULL     |
-| `source`          | VARCHAR(100) |              |
-| `data`            | JSONB        |              |
-| `created_at`      | TIMESTAMPTZ  | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `exercise_id` | BIGINT | FK, NOT NULL |
+| `asset_id` | BIGINT | FK, nullable |
+| `service_id` | BIGINT | FK, nullable |
+| `event_type` | VARCHAR(50) | NOT NULL |
+| `severity` | VARCHAR(20) | |
+| `event_timestamp` | TIMESTAMPTZ | NOT NULL |
+| `source` | VARCHAR(100) | |
+| `data` | JSONB | |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
 
 Example event types:
 
@@ -1043,14 +1076,14 @@ SERVICE_STATE
 
 Purpose: Assessment-relevant evidence.
 
-| Column          | Type        | Constraint   |
-| --------------- | ----------- | ------------ |
-| `id`            | BIGSERIAL   | PK           |
-| `exercise_id`   | BIGINT      | FK, NOT NULL |
-| `event_id`      | BIGINT      | FK, nullable |
-| `evidence_type` | VARCHAR(50) | NOT NULL     |
-| `data`          | JSONB       |              |
-| `created_at`    | TIMESTAMPTZ | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `exercise_id` | BIGINT | FK, NOT NULL |
+| `event_id` | BIGINT | FK, nullable |
+| `evidence_type` | VARCHAR(50) | NOT NULL |
+| `data` | JSONB | |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
 
 ---
 
@@ -1058,19 +1091,21 @@ Purpose: Assessment-relevant evidence.
 
 Purpose: Main assessment of an Exercise.
 
-| Column           | Type         | Constraint   |
-| ---------------- | ------------ | ------------ |
-| `id`             | BIGSERIAL    | PK           |
-| `exercise_id`    | BIGINT       | FK, UNIQUE   |
-| `status`         | VARCHAR(30)  | NOT NULL     |
-| `total_score`    | NUMERIC(7,2) | NOT NULL     |
-| `started_at`     | TIMESTAMPTZ  |              |
-| `completed_at`   | TIMESTAMPTZ  |              |
-| `review_status`  | VARCHAR(30)  | NOT NULL     |
-| `reviewed_by`    | BIGINT       | FK, nullable |
-| `reviewed_at`    | TIMESTAMPTZ  |              |
-| `review_comment` | TEXT         |              |
-| `created_at`     | TIMESTAMPTZ  | NOT NULL     |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `exercise_id` | BIGINT | FK, UNIQUE |
+| `status` | VARCHAR(30) | NOT NULL |
+| `total_score` | NUMERIC(7,2) | NOT NULL |
+| `started_at` | TIMESTAMPTZ | |
+| `completed_at` | TIMESTAMPTZ | |
+| `review_status` | VARCHAR(30) | NOT NULL |
+| `reviewed_by` | BIGINT | FK, nullable |
+| `reviewed_at` | TIMESTAMPTZ | |
+| `review_comment` | TEXT | |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
+
+Assessment-level `status` describes the state of the evaluation process. It is distinct from the task-level status in `assessment_results`.
 
 ---
 
@@ -1078,18 +1113,42 @@ Purpose: Main assessment of an Exercise.
 
 Purpose: Assessment result for each Defensive Task.
 
-| Column              | Type        | Constraint   |
-| ------------------- | ----------- | ------------ |
-| `id`                | BIGSERIAL   | PK           |
-| `assessment_id`     | BIGINT      | FK, NOT NULL |
-| `defensive_task_id` | BIGINT      | FK, NOT NULL |
-| `status`            | VARCHAR(30) | NOT NULL     |
-| `detected_at`       | TIMESTAMPTZ |              |
-| `responded_at`      | TIMESTAMPTZ |              |
-| `completed_at`      | TIMESTAMPTZ |              |
-| `detection_time`    | INTERVAL    |              |
-| `response_time`     | INTERVAL    |              |
-| `reason`            | TEXT        |              |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `assessment_id` | BIGINT | FK, NOT NULL |
+| `defensive_task_id` | BIGINT | FK, NOT NULL |
+| `status` | VARCHAR(30) | NOT NULL |
+| `detected_at` | TIMESTAMPTZ | |
+| `responded_at` | TIMESTAMPTZ | |
+| `completed_at` | TIMESTAMPTZ | |
+| `detection_time` | INTERVAL | |
+| `response_time` | INTERVAL | |
+| `reason` | TEXT | |
+
+Allowed Assessment Result statuses:
+
+```text
+PENDING
+IN_PROGRESS
+COMPLETED
+FAILED
+NOT_APPLICABLE
+```
+
+Ý nghĩa:
+
+* `PENDING`: Task chưa được xử lý hoặc chưa bắt đầu đánh giá.
+* `IN_PROGRESS`: Task đang được thực hiện hoặc đánh giá.
+* `COMPLETED`: Task đã đáp ứng yêu cầu. Điểm được xác định dựa trên Assessment Criteria và Evidence.
+* `FAILED`: Task không đáp ứng yêu cầu. Task vẫn có thể nhận điểm một phần theo Assessment Criteria.
+* `NOT_APPLICABLE`: Task không áp dụng cho Exercise hiện tại.
+
+Quy tắc tính điểm:
+
+* `PENDING` và `IN_PROGRESS` chưa phải kết quả cuối cùng để tổng kết.
+* `FAILED` không tự động đồng nghĩa với 0 điểm; điểm được xác định theo Assessment Criteria và Evidence.
+* `NOT_APPLICABLE` không đóng góp vào điểm đạt được và cũng không đóng góp vào điểm tối đa có thể đạt của Exercise.
 
 Unique constraint:
 
@@ -1099,26 +1158,32 @@ Unique constraint:
 
 Một Task chỉ có một kết quả trong một Assessment.
 
+`FAILED` ở cấp `assessment_results` có nghĩa là Defensive Task không đạt yêu cầu. Trạng thái `FAILED` ở cấp `assessments`, nếu được sử dụng, biểu thị quá trình đánh giá gặp lỗi và là một khái niệm khác.
+
 ---
 
 ## 11.17. `assessment_scores`
 
 Purpose: Detailed score awarded for each Assessment Criterion.
 
-| Column                 | Type         | Constraint   |
-| ---------------------- | ------------ | ------------ |
-| `id`                   | BIGSERIAL    | PK           |
-| `assessment_result_id` | BIGINT       | FK, NOT NULL |
-| `criterion_id`         | BIGINT       | FK, NOT NULL |
-| `awarded_score`        | NUMERIC(5,2) | NOT NULL     |
-| `max_score`            | NUMERIC(5,2) | NOT NULL     |
-| `reason`               | TEXT         |              |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `assessment_result_id` | BIGINT | FK, NOT NULL |
+| `criterion_id` | BIGINT | FK, NOT NULL |
+| `awarded_score` | NUMERIC(5,2) | NOT NULL |
+| `max_score` | NUMERIC(5,2) | NOT NULL |
+| `reason` | TEXT | |
 
 Constraint:
 
 ```text
-awarded_score <= max_score
+0 <= awarded_score <= max_score
 ```
+
+`max_score` là snapshot của điểm tối đa của Criterion tại thời điểm chấm điểm.
+
+Application Service phải bảo đảm Criterion thuộc đúng Defensive Task của Assessment Result tương ứng.
 
 ---
 
@@ -1126,19 +1191,19 @@ awarded_score <= max_score
 
 Purpose: Incident reports submitted by Blue Team and reviewed by authorized users.
 
-| Column           | Type         | Constraint   |
-| ---------------- | ------------ | ------------ |
-| `id`             | BIGSERIAL    | PK           |
-| `exercise_id`    | BIGINT       | FK, NOT NULL |
-| `submitted_by`   | BIGINT       | FK, NOT NULL |
-| `title`          | VARCHAR(255) | NOT NULL     |
-| `description`    | TEXT         | NOT NULL     |
-| `severity`       | VARCHAR(20)  |              |
-| `status`         | VARCHAR(30)  | NOT NULL     |
-| `submitted_at`   | TIMESTAMPTZ  | NOT NULL     |
-| `reviewed_by`    | BIGINT       | FK, nullable |
-| `reviewed_at`    | TIMESTAMPTZ  |              |
-| `review_comment` | TEXT         |              |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `exercise_id` | BIGINT | FK, NOT NULL |
+| `submitted_by` | BIGINT | FK, NOT NULL |
+| `title` | VARCHAR(255) | NOT NULL |
+| `description` | TEXT | NOT NULL |
+| `severity` | VARCHAR(20) | |
+| `status` | VARCHAR(30) | NOT NULL |
+| `submitted_at` | TIMESTAMPTZ | NOT NULL |
+| `reviewed_by` | BIGINT | FK, nullable |
+| `reviewed_at` | TIMESTAMPTZ | |
+| `review_comment` | TEXT | |
 
 ---
 
@@ -1146,32 +1211,32 @@ Purpose: Incident reports submitted by Blue Team and reviewed by authorized user
 
 Purpose: System audit trail.
 
-| Column        | Type         | Constraint   |
-| ------------- | ------------ | ------------ |
-| `id`          | BIGSERIAL    | PK           |
-| `user_id`     | BIGINT       | FK, nullable |
-| `action`      | VARCHAR(100) | NOT NULL     |
-| `entity_type` | VARCHAR(100) |              |
-| `entity_id`   | BIGINT       |              |
-| `created_at`  | TIMESTAMPTZ  | NOT NULL     |
-| `metadata`    | JSONB        |              |
+| Column | Type | Constraint |
+|---|---|---|
+| `id` | BIGSERIAL | PK |
+| `user_id` | BIGINT | FK, nullable |
+| `action` | VARCHAR(100) | NOT NULL |
+| `entity_type` | VARCHAR(100) | |
+| `entity_id` | BIGINT | |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
+| `metadata` | JSONB | |
 
 ---
 
 # 12. V1 Scoring Model
 
-V1 sử dụng tổng điểm 100:
+V1 sử dụng tổng điểm mục tiêu 100 cho bộ task tiêu chuẩn:
 
-| Defensive Task            | Max Score |
-| ------------------------- | --------: |
-| Detect Port Scan          |        10 |
-| Detect Brute Force        |        10 |
-| Detect Web Attack         |        15 |
-| Identify Compromised Host |        15 |
-| Isolate Attacked Host     |        20 |
-| Recover Service           |        20 |
-| Incident Report           |        10 |
-| **Total**                 |   **100** |
+| Defensive Task | Max Score |
+|---|---:|
+| Detect Port Scan | 10 |
+| Detect Brute Force | 10 |
+| Detect Web Attack | 15 |
+| Identify Compromised Host | 15 |
+| Isolate Attacked Host | 20 |
+| Recover Service | 20 |
+| Incident Report | 10 |
+| **Total** | **100** |
 
 Các giá trị điểm được lưu trong:
 
@@ -1192,6 +1257,13 @@ Chi tiết điểm được lưu tại:
 ```text
 assessment_scores
 ```
+
+Quy tắc tính điểm V1:
+
+* `PENDING` và `IN_PROGRESS` chưa phải kết quả cuối cùng để tổng kết.
+* `FAILED` không tự động đồng nghĩa với 0 điểm; điểm được xác định theo Assessment Criteria và Evidence.
+* Các task `NOT_APPLICABLE` không đóng góp vào điểm đạt được và cũng không đóng góp vào điểm tối đa có thể đạt của Exercise.
+* Điểm tối đa thực tế là tổng `max_score` của các tiêu chí thuộc các task áp dụng.
 
 ---
 

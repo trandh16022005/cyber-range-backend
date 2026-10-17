@@ -79,20 +79,16 @@ Scoring Engine
 Trong môi trường phát triển:
 
 ```text
-http://localhost:8080/api
+http://localhost:8080/api/v1
 ```
 
 Trong môi trường production:
 
 ```text
-https://<domain>/api
+https://<domain>/api/v1
 ```
 
-API versioning có thể được bổ sung khi cần. V1 hiện sử dụng:
-
-```text
-/api/...
-```
+Tất cả endpoint V1 sử dụng tiền tố cố định `/api/v1`. Không tạo endpoint V1 ngoài tiền tố này.
 
 ---
 
@@ -111,14 +107,14 @@ Client phải gửi JWT đối với các endpoint yêu cầu authentication.
 Ví dụ:
 
 ```http
-GET /api/auth/me
+GET /api/v1/auth/me
 Authorization: Bearer eyJ...
 ```
 
 Các endpoint public trong V1:
 
 ```text
-POST /api/auth/login
+POST /api/v1/auth/login
 ```
 
 Các endpoint còn lại yêu cầu authentication trừ khi được quy định khác.
@@ -223,15 +219,15 @@ Quản lý, giám sát và điều khiển Exercise:
 API không tạo các namespace riêng:
 
 ```text
-/api/red-team/...
-/api/blue-team/...
-/api/white-team/...
+/api/v1/red-team/...
+/api/v1/blue-team/...
+/api/v1/white-team/...
 ```
 
 Thay vào đó, sử dụng resource chung:
 
 ```text
-/api/exercises/...
+/api/v1/exercises/...
 ```
 
 Backend xác định quyền dựa trên:
@@ -263,18 +259,23 @@ Exercise Role phải được kiểm tra từ dữ liệu `exercise_participants
 
 API sử dụng các HTTP status code chính:
 
-| Status                      | Ý nghĩa                                     |
-| --------------------------- | ------------------------------------------- |
-| `200 OK`                    | Request thành công                          |
-| `201 Created`               | Tạo resource thành công                     |
-| `204 No Content`            | Request thành công, không có response body  |
-| `400 Bad Request`           | Request không hợp lệ                        |
-| `401 Unauthorized`          | Chưa authentication hoặc token không hợp lệ |
-| `403 Forbidden`             | Đã authentication nhưng không có quyền      |
-| `404 Not Found`             | Resource không tồn tại                      |
-| `409 Conflict`              | Xung đột dữ liệu hoặc trạng thái            |
-| `422 Unprocessable Entity`  | Dữ liệu không vượt qua validation nghiệp vụ |
-| `500 Internal Server Error` | Lỗi server không mong muốn                  |
+| Status | Ý nghĩa |
+|---|---|
+| `200 OK` | Request thành công |
+| `201 Created` | Tạo resource thành công |
+| `204 No Content` | Request thành công, không có response body |
+| `400 Bad Request` | Request hoặc dữ liệu validation không hợp lệ |
+| `401 Unauthorized` | Chưa authentication hoặc token không hợp lệ |
+| `403 Forbidden` | Đã authentication nhưng không có quyền |
+| `404 Not Found` | Resource không tồn tại |
+| `409 Conflict` | Xung đột dữ liệu hoặc trạng thái nghiệp vụ |
+| `500 Internal Server Error` | Lỗi server không mong muốn |
+
+Quy tắc V1:
+
+* Sử dụng `400 Bad Request` cho lỗi validation.
+* Sử dụng `409 Conflict` cho xung đột trạng thái hoặc quy tắc nghiệp vụ.
+* Không sử dụng `422 Unprocessable Entity` cho validation trong V1.
 
 ---
 
@@ -315,7 +316,7 @@ Danh sách:
   "status": 400,
   "error": "BAD_REQUEST",
   "message": "Invalid request",
-  "path": "/api/exercises"
+  "path": "/api/v1/exercises"
 }
 ```
 
@@ -327,7 +328,7 @@ Chi tiết validation:
   "status": 400,
   "error": "VALIDATION_ERROR",
   "message": "Request validation failed",
-  "path": "/api/users",
+  "path": "/api/v1/users",
   "errors": {
     "username": "Username is required",
     "email": "Invalid email"
@@ -342,7 +343,7 @@ Chi tiết validation:
 ## 10.1. Login
 
 ```http
-POST /api/auth/login
+POST /api/v1/auth/login
 ```
 
 Authentication:
@@ -392,7 +393,7 @@ Possible status:
 ## 10.2. Current User
 
 ```http
-GET /api/auth/me
+GET /api/v1/auth/me
 ```
 
 Authentication:
@@ -423,13 +424,13 @@ Response:
 Resource:
 
 ```text
-/api/users
+/api/v1/users
 ```
 
 ## 11.1. List Users
 
 ```http
-GET /api/users
+GET /api/v1/users
 ```
 
 Roles:
@@ -454,7 +455,7 @@ search
 ## 11.2. Get User
 
 ```http
-GET /api/users/{id}
+GET /api/v1/users/{id}
 ```
 
 Roles:
@@ -469,7 +470,7 @@ INSTRUCTOR
 ## 11.3. Create User
 
 ```http
-POST /api/users
+POST /api/v1/users
 ```
 
 Roles:
@@ -497,7 +498,7 @@ Password phải được hash ở Backend trước khi lưu.
 ## 11.4. Update User
 
 ```http
-PATCH /api/users/{id}
+PATCH /api/v1/users/{id}
 ```
 
 Roles:
@@ -511,7 +512,7 @@ ADMIN
 ## 11.5. Change User Status
 
 ```http
-PATCH /api/users/{id}/status
+PATCH /api/v1/users/{id}/status
 ```
 
 Roles:
@@ -543,13 +544,13 @@ LOCKED
 Resource:
 
 ```text
-/api/teams
+/api/v1/teams
 ```
 
 ## 12.1. List Teams
 
 ```http
-GET /api/teams
+GET /api/v1/teams
 ```
 
 Roles:
@@ -564,7 +565,7 @@ INSTRUCTOR
 ## 12.2. Get Team
 
 ```http
-GET /api/teams/{id}
+GET /api/v1/teams/{id}
 ```
 
 Roles:
@@ -579,7 +580,7 @@ INSTRUCTOR
 ## 12.3. Create Team
 
 ```http
-POST /api/teams
+POST /api/v1/teams
 ```
 
 Roles:
@@ -603,7 +604,7 @@ Request:
 ## 12.4. Update Team
 
 ```http
-PATCH /api/teams/{id}
+PATCH /api/v1/teams/{id}
 ```
 
 Roles:
@@ -618,7 +619,7 @@ INSTRUCTOR
 ## 12.5. List Team Members
 
 ```http
-GET /api/teams/{id}/members
+GET /api/v1/teams/{id}/members
 ```
 
 Roles:
@@ -633,7 +634,7 @@ INSTRUCTOR
 ## 12.6. Add Team Member
 
 ```http
-POST /api/teams/{id}/members
+POST /api/v1/teams/{id}/members
 ```
 
 Roles:
@@ -656,7 +657,7 @@ Request:
 ## 12.7. Remove Team Member
 
 ```http
-DELETE /api/teams/{id}/members/{userId}
+DELETE /api/v1/teams/{id}/members/{userId}
 ```
 
 Roles:
@@ -675,13 +676,13 @@ Scenario là template có thể được sử dụng để tạo nhiều Exercis
 Resource:
 
 ```text
-/api/scenarios
+/api/v1/scenarios
 ```
 
 ## 13.1. List Scenarios
 
 ```http
-GET /api/scenarios
+GET /api/v1/scenarios
 ```
 
 Authenticated users.
@@ -691,7 +692,7 @@ Authenticated users.
 ## 13.2. Get Scenario
 
 ```http
-GET /api/scenarios/{id}
+GET /api/v1/scenarios/{id}
 ```
 
 Authenticated users có quyền truy cập Scenario.
@@ -701,7 +702,7 @@ Authenticated users có quyền truy cập Scenario.
 ## 13.3. Create Scenario
 
 ```http
-POST /api/scenarios
+POST /api/v1/scenarios
 ```
 
 Roles:
@@ -727,7 +728,7 @@ Request:
 ## 13.4. Update Scenario
 
 ```http
-PATCH /api/scenarios/{id}
+PATCH /api/v1/scenarios/{id}
 ```
 
 Roles:
@@ -742,7 +743,7 @@ INSTRUCTOR
 ## 13.5. Publish Scenario
 
 ```http
-POST /api/scenarios/{id}/publish
+POST /api/v1/scenarios/{id}/publish
 ```
 
 Roles:
@@ -761,7 +762,7 @@ Scenario chỉ nên được sử dụng để tạo Exercise khi ở trạng th
 Resource:
 
 ```text
-/api/tasks
+/api/v1/tasks
 ```
 
 Task thuộc về một Scenario.
@@ -769,7 +770,7 @@ Task thuộc về một Scenario.
 ## 14.1. List Tasks of Scenario
 
 ```http
-GET /api/scenarios/{id}/tasks
+GET /api/v1/scenarios/{id}/tasks
 ```
 
 Authenticated users có quyền truy cập Scenario.
@@ -779,7 +780,7 @@ Authenticated users có quyền truy cập Scenario.
 ## 14.2. Create Task
 
 ```http
-POST /api/scenarios/{id}/tasks
+POST /api/v1/scenarios/{id}/tasks
 ```
 
 Roles:
@@ -807,7 +808,7 @@ Request:
 ## 14.3. Update Task
 
 ```http
-PATCH /api/tasks/{id}
+PATCH /api/v1/tasks/{id}
 ```
 
 Roles:
@@ -824,7 +825,7 @@ INSTRUCTOR
 Resource:
 
 ```text
-/api/criteria
+/api/v1/criteria
 ```
 
 Criteria định nghĩa điều kiện để đánh giá Task.
@@ -832,7 +833,7 @@ Criteria định nghĩa điều kiện để đánh giá Task.
 ## 15.1. List Criteria
 
 ```http
-GET /api/tasks/{id}/criteria
+GET /api/v1/tasks/{id}/criteria
 ```
 
 Roles:
@@ -847,7 +848,7 @@ INSTRUCTOR
 ## 15.2. Create Criterion
 
 ```http
-POST /api/tasks/{id}/criteria
+POST /api/v1/tasks/{id}/criteria
 ```
 
 Roles:
@@ -873,7 +874,7 @@ Request:
 ## 15.3. Update Criterion
 
 ```http
-PATCH /api/criteria/{id}
+PATCH /api/v1/criteria/{id}
 ```
 
 Roles:
@@ -890,13 +891,13 @@ INSTRUCTOR
 Resource:
 
 ```text
-/api/cyber-ranges
+/api/v1/cyber-ranges
 ```
 
 ## 16.1. List Cyber Ranges
 
 ```http
-GET /api/cyber-ranges
+GET /api/v1/cyber-ranges
 ```
 
 Roles:
@@ -911,7 +912,7 @@ INSTRUCTOR
 ## 16.2. Get Cyber Range
 
 ```http
-GET /api/cyber-ranges/{id}
+GET /api/v1/cyber-ranges/{id}
 ```
 
 Roles:
@@ -929,7 +930,7 @@ White chỉ được xem Cyber Range được gán cho Exercise của mình.
 ## 16.3. Create Cyber Range
 
 ```http
-POST /api/cyber-ranges
+POST /api/v1/cyber-ranges
 ```
 
 Roles:
@@ -944,7 +945,7 @@ INSTRUCTOR
 ## 16.4. Update Cyber Range
 
 ```http
-PATCH /api/cyber-ranges/{id}
+PATCH /api/v1/cyber-ranges/{id}
 ```
 
 Roles:
@@ -972,13 +973,13 @@ Database Server
 Resource:
 
 ```text
-/api/assets
+/api/v1/assets
 ```
 
 ## 17.1. List Assets
 
 ```http
-GET /api/cyber-ranges/{id}/assets
+GET /api/v1/cyber-ranges/{id}/assets
 ```
 
 Roles:
@@ -994,7 +995,7 @@ WHITE
 ## 17.2. Create Asset
 
 ```http
-POST /api/cyber-ranges/{id}/assets
+POST /api/v1/cyber-ranges/{id}/assets
 ```
 
 Roles:
@@ -1013,8 +1014,16 @@ Request:
   "hostname": "linux01",
   "ipAddress": "192.168.10.10",
   "os": "Ubuntu",
-  "status": "RUNNING"
+  "status": "ONLINE"
 }
+```
+
+Các trạng thái Asset hợp lệ trong V1:
+
+```text
+ONLINE
+OFFLINE
+MAINTENANCE
 ```
 
 ---
@@ -1022,7 +1031,7 @@ Request:
 ## 17.3. Get Asset
 
 ```http
-GET /api/assets/{id}
+GET /api/v1/assets/{id}
 ```
 
 Authenticated users có quyền truy cập Exercise/Cyber Range tương ứng.
@@ -1032,7 +1041,7 @@ Authenticated users có quyền truy cập Exercise/Cyber Range tương ứng.
 ## 17.4. Update Asset
 
 ```http
-PATCH /api/assets/{id}
+PATCH /api/v1/assets/{id}
 ```
 
 Roles:
@@ -1059,7 +1068,7 @@ HTTPS : 443
 ## 18.1. List Services
 
 ```http
-GET /api/assets/{id}/services
+GET /api/v1/assets/{id}/services
 ```
 
 ---
@@ -1067,7 +1076,7 @@ GET /api/assets/{id}/services
 ## 18.2. Create Service
 
 ```http
-POST /api/assets/{id}/services
+POST /api/v1/assets/{id}/services
 ```
 
 Roles:
@@ -1094,7 +1103,7 @@ Request:
 ## 18.3. Update Service
 
 ```http
-PATCH /api/services/{id}
+PATCH /api/v1/services/{id}
 ```
 
 Roles:
@@ -1121,13 +1130,13 @@ Exercise
 Resource:
 
 ```text
-/api/exercises
+/api/v1/exercises
 ```
 
 ## 19.1. List Exercises
 
 ```http
-GET /api/exercises
+GET /api/v1/exercises
 ```
 
 Kết quả phải được lọc theo quyền truy cập của User.
@@ -1137,7 +1146,7 @@ Kết quả phải được lọc theo quyền truy cập của User.
 ## 19.2. Get Exercise
 
 ```http
-GET /api/exercises/{id}
+GET /api/v1/exercises/{id}
 ```
 
 User chỉ được xem Exercise mà mình có quyền truy cập.
@@ -1147,7 +1156,7 @@ User chỉ được xem Exercise mà mình có quyền truy cập.
 ## 19.3. Create Exercise
 
 ```http
-POST /api/exercises
+POST /api/v1/exercises
 ```
 
 Roles:
@@ -1174,7 +1183,7 @@ Backend tạo một Exercise mới dựa trên Scenario và Cyber Range.
 ## 19.4. Update Exercise
 
 ```http
-PATCH /api/exercises/{id}
+PATCH /api/v1/exercises/{id}
 ```
 
 Roles:
@@ -1211,7 +1220,7 @@ WHITE
 ## 20.1. List Participants
 
 ```http
-GET /api/exercises/{id}/participants
+GET /api/v1/exercises/{id}/participants
 ```
 
 Roles:
@@ -1222,12 +1231,14 @@ INSTRUCTOR
 WHITE
 ```
 
+`WHITE` chỉ được xem danh sách người tham gia của Exercise được phân công. Backend phải kiểm tra quyền ở cấp Exercise.
+
 ---
 
 ## 20.2. Add Participant
 
 ```http
-POST /api/exercises/{id}/participants
+POST /api/v1/exercises/{id}/participants
 ```
 
 Roles:
@@ -1260,7 +1271,7 @@ Backend phải kiểm tra:
 ## 20.3. Remove Participant
 
 ```http
-DELETE /api/exercises/{id}/participants/{participantId}
+DELETE /api/v1/exercises/{id}/participants/{participantId}
 ```
 
 Roles:
@@ -1268,21 +1279,18 @@ Roles:
 ```text
 ADMIN
 INSTRUCTOR
-WHITE
 ```
-
-White chỉ được thực hiện trong Exercise mà mình được phân công.
 
 ---
 
 # 21. Exercise Control API
 
-Exercise Control phục vụ White Team.
+Exercise Control phục vụ White Team. Chỉ `INSTRUCTOR` và `WHITE` được phân công cho Exercise mới được thực hiện Start/Pause/Resume/Stop/Reset; `ADMIN` không có quyền điều khiển vòng đời theo mặc định. Backend phải kiểm tra việc phân công `WHITE` ở cấp Exercise.
 
 ## 21.1. Start
 
 ```http
-POST /api/exercises/{id}/start
+POST /api/v1/exercises/{id}/start
 ```
 
 Roles:
@@ -1303,7 +1311,7 @@ Exercise = READY
 ## 21.2. Pause
 
 ```http
-POST /api/exercises/{id}/pause
+POST /api/v1/exercises/{id}/pause
 ```
 
 Roles:
@@ -1324,7 +1332,7 @@ Exercise = RUNNING
 ## 21.3. Resume
 
 ```http
-POST /api/exercises/{id}/resume
+POST /api/v1/exercises/{id}/resume
 ```
 
 Roles:
@@ -1345,7 +1353,7 @@ Exercise = PAUSED
 ## 21.4. Stop
 
 ```http
-POST /api/exercises/{id}/stop
+POST /api/v1/exercises/{id}/stop
 ```
 
 Roles:
@@ -1360,7 +1368,7 @@ WHITE
 ## 21.5. Reset
 
 ```http
-POST /api/exercises/{id}/reset
+POST /api/v1/exercises/{id}/reset
 ```
 
 Roles:
@@ -1385,7 +1393,10 @@ RUNNING
 PAUSED
 STOPPED
 COMPLETED
+CANCELLED
 ```
+
+`RESET` là hành động điều khiển, không phải trạng thái được lưu. Sau khi reset và khởi tạo lại môi trường thành công, Exercise chuyển về `READY`; nếu khởi tạo môi trường thất bại, Exercise chuyển về `CREATED`.
 
 Việc chuyển trạng thái phải được thực hiện ở Backend.
 
@@ -1418,7 +1429,7 @@ Host State Change
 ## 23.1. Ingest Event
 
 ```http
-POST /api/events
+POST /api/v1/events
 ```
 
 Endpoint dành cho Event Collector hoặc trusted service.
@@ -1453,7 +1464,7 @@ Backend phải kiểm tra:
 ## 23.2. List Exercise Events
 
 ```http
-GET /api/exercises/{id}/events
+GET /api/v1/exercises/{id}/events
 ```
 
 Roles:
@@ -1472,7 +1483,7 @@ Red không mặc định được xem toàn bộ event của hệ thống.
 ## 23.3. Get Event
 
 ```http
-GET /api/exercises/{id}/events/{eventId}
+GET /api/v1/exercises/{id}/events/{eventId}
 ```
 
 Authorization phải kiểm tra Event thuộc Exercise tương ứng.
@@ -1498,7 +1509,7 @@ Assessment
 ## 24.1. List Evidence
 
 ```http
-GET /api/exercises/{id}/evidence
+GET /api/v1/exercises/{id}/evidence
 ```
 
 Roles:
@@ -1515,7 +1526,7 @@ Blue chỉ được xem Evidence mà thiết kế Scenario cho phép.
 ## 24.2. Get Evidence
 
 ```http
-GET /api/exercises/{id}/evidence/{evidenceId}
+GET /api/v1/exercises/{id}/evidence/{evidenceId}
 ```
 
 Backend phải kiểm tra:
@@ -1550,7 +1561,7 @@ Assessment Result
 ## 25.1. Get Exercise Assessment
 
 ```http
-GET /api/exercises/{id}/assessment
+GET /api/v1/exercises/{id}/assessment
 ```
 
 Roles:
@@ -1569,7 +1580,7 @@ Dữ liệu trả về phải được giới hạn theo quyền truy cập.
 ## 25.2. Get Assessment Results
 
 ```http
-GET /api/exercises/{id}/assessment/results
+GET /api/v1/exercises/{id}/assessment/results
 ```
 
 Roles:
@@ -1586,7 +1597,7 @@ BLUE
 ## 25.3. Get Assessment Result
 
 ```http
-GET /api/exercises/{id}/assessment/results/{resultId}
+GET /api/v1/exercises/{id}/assessment/results/{resultId}
 ```
 
 ---
@@ -1594,7 +1605,7 @@ GET /api/exercises/{id}/assessment/results/{resultId}
 ## 25.4. Run Assessment
 
 ```http
-POST /api/exercises/{id}/assessment/run
+POST /api/v1/exercises/{id}/assessment/run
 ```
 
 Roles:
@@ -1640,14 +1651,25 @@ PENDING
 IN_PROGRESS
 COMPLETED
 FAILED
-NOT_COMPLETED
+NOT_APPLICABLE
 ```
+
+`FAILED` nghĩa là Defensive Task không đáp ứng yêu cầu; Assessment Result vẫn có thể nhận điểm một phần theo các Assessment Criteria. `NOT_APPLICABLE` nghĩa là task không áp dụng cho Exercise và bị loại khỏi điểm tối đa có thể đạt của Exercise, không được tính như một task 0 điểm trong mẫu số.
+
+`PENDING` và `IN_PROGRESS` là các trạng thái chưa có kết quả cuối cùng.
 
 ---
 
 # 27. Scoring API
 
 Scoring Engine tính điểm dựa trên Assessment Result và Assessment Criteria.
+
+Quy tắc V1:
+
+* Chỉ các task có trạng thái kết quả cuối cùng mới được dùng để tổng kết điểm.
+* `FAILED` không mặc định đồng nghĩa với 0 điểm; điểm được tính theo các Assessment Criteria và bằng chứng quan sát được.
+* `NOT_APPLICABLE` bị loại khỏi điểm tối đa có thể đạt của Exercise.
+* Điểm tối đa thực tế của Exercise là tổng `max_score` của các tiêu chí thuộc những task áp dụng; không tính các task `NOT_APPLICABLE`.
 
 Luồng:
 
@@ -1667,7 +1689,7 @@ Assessment Score
 ## 27.1. Get Exercise Score
 
 ```http
-GET /api/exercises/{id}/score
+GET /api/v1/exercises/{id}/score
 ```
 
 Roles:
@@ -1684,7 +1706,7 @@ BLUE
 ## 27.2. Get Score Details
 
 ```http
-GET /api/exercises/{id}/score/details
+GET /api/v1/exercises/{id}/score/details
 ```
 
 Response:
@@ -1715,16 +1737,16 @@ Không có endpoint cho Client tự gửi điểm.
 
 Các tiêu chí ban đầu:
 
-| Criterion                 | Max Score |
-| ------------------------- | --------: |
-| Detect port scan          |        10 |
-| Detect brute force        |        10 |
-| Detect web attack         |        15 |
-| Identify compromised host |        15 |
-| Isolate attacked host     |        20 |
-| Recover service           |        20 |
-| Incident report           |        10 |
-| **Total**                 |   **100** |
+| Criterion | Max Score |
+|---|---:|
+| Detect port scan | 10 |
+| Detect brute force | 10 |
+| Detect web attack | 15 |
+| Identify compromised host | 15 |
+| Isolate attacked host | 20 |
+| Recover service | 20 |
+| Incident report | 10 |
+| **Total** | **100** |
 
 Scoring Engine chịu trách nhiệm tính điểm.
 
@@ -1739,7 +1761,7 @@ Blue Team sử dụng API này để gửi báo cáo sự cố.
 ## 29.1. Create Incident Report
 
 ```http
-POST /api/exercises/{id}/incident-reports
+POST /api/v1/exercises/{id}/incident-reports
 ```
 
 Exercise Role:
@@ -1763,7 +1785,7 @@ Request:
 ## 29.2. List Incident Reports
 
 ```http
-GET /api/exercises/{id}/incident-reports
+GET /api/v1/exercises/{id}/incident-reports
 ```
 
 Roles:
@@ -1780,7 +1802,7 @@ BLUE
 ## 29.3. Get Incident Report
 
 ```http
-GET /api/incident-reports/{id}
+GET /api/v1/incident-reports/{id}
 ```
 
 Authorization phải kiểm tra Exercise ownership/access.
@@ -1790,7 +1812,7 @@ Authorization phải kiểm tra Exercise ownership/access.
 ## 29.4. Update Incident Report
 
 ```http
-PATCH /api/incident-reports/{id}
+PATCH /api/v1/incident-reports/{id}
 ```
 
 Exercise Role:
@@ -1808,7 +1830,7 @@ Chỉ người gửi hoặc Blue Team participant có quyền tương ứng mớ
 White Team hoặc Instructor review Incident Report.
 
 ```http
-POST /api/incident-reports/{id}/review
+POST /api/v1/incident-reports/{id}/review
 ```
 
 Roles:
@@ -1860,7 +1882,7 @@ Incident Reports
 ## 31.1. Get Exercise Report
 
 ```http
-GET /api/exercises/{id}/report
+GET /api/v1/exercises/{id}/report
 ```
 
 Roles:
@@ -1905,7 +1927,7 @@ Audit Log ghi nhận các hành động quan trọng.
 ## 32.1. List Audit Logs
 
 ```http
-GET /api/audit-logs
+GET /api/v1/audit-logs
 ```
 
 Roles:
@@ -1930,7 +1952,7 @@ to
 ## 32.2. Get Audit Log
 
 ```http
-GET /api/audit-logs/{id}
+GET /api/v1/audit-logs/{id}
 ```
 
 Roles:
@@ -1945,36 +1967,38 @@ ADMIN
 
 Ma trận dưới đây mô tả quyền ở mức API/business operation. Resource-level authorization vẫn phải được kiểm tra ở Backend.
 
-| Resource / Operation   |  ADMIN  | INSTRUCTOR | STUDENT | RED |   BLUE  | WHITE |
-| ---------------------- | :-----: | :--------: | :-----: | :-: | :-----: | :---: |
-| Login                  |    ✓    |      ✓     |    ✓    |  -  |    -    |   -   |
-| View own profile       |    ✓    |      ✓     |    ✓    |  -  |    -    |   -   |
-| Manage users           |    ✓    |      -     |    -    |  -  |    -    |   -   |
-| Manage teams           |    ✓    |      ✓     |    -    |  -  |    -    |   -   |
-| Manage scenarios       |    ✓    |      ✓     |    -    |  -  |    -    |   -   |
-| Manage tasks           |    ✓    |      ✓     |    -    |  -  |    -    |   -   |
-| Manage criteria        |    ✓    |      ✓     |    -    |  -  |    -    |   -   |
-| Manage Cyber Range     |    ✓    |      ✓     |    -    |  -  |    -    |   -   |
-| Create Exercise        |    ✓    |      ✓     |    -    |  -  |    -    |   -   |
-| View assigned Exercise |    ✓    |      ✓     |    ✓    |  ✓  |    ✓    |   ✓   |
-| Manage participants    |    ✓    |      ✓     |    -    |  -  |    -    |   ✓*  |
-| Start Exercise         |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| Pause Exercise         |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| Resume Exercise        |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| Stop Exercise          |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| Reset Exercise         |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| Ingest Event           | Service |   Service  |    -    |  -  |    -    |   -   |
-| View Exercise Events   |    ✓    |      ✓     |    -    |  -  | Limited |   ✓   |
-| View Evidence          |    ✓    |      ✓     |    -    |  -  | Limited |   ✓   |
-| View Assessment        |    ✓    |      ✓     |    -    |  -  |    ✓    |   ✓   |
-| Run Assessment         |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| View Score             |    ✓    |      ✓     |    ✓    |  ✓  |    ✓    |   ✓   |
-| Submit Incident Report |    -    |      -     |    -    |  -  |    ✓    |   -   |
-| Review Incident Report |    ✓    |      ✓     |    -    |  -  |    -    |   ✓   |
-| View Final Report      |    ✓    |      ✓     |    ✓    |  ✓  |    ✓    |   ✓   |
-| View Audit Logs        |    ✓    |   Limited  |    -    |  -  |    -    |   -   |
+| Resource / Operation | ADMIN | INSTRUCTOR | STUDENT | RED | BLUE | WHITE |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Login | ✓ | ✓ | ✓ | - | - | - |
+| View own profile | ✓ | ✓ | ✓ | - | - | - |
+| Manage users | ✓ | - | - | - | - | - |
+| Manage teams | ✓ | ✓ | - | - | - | - |
+| Manage scenarios | ✓ | ✓ | - | - | - | - |
+| Manage tasks | ✓ | ✓ | - | - | - | - |
+| Manage criteria | ✓ | ✓ | - | - | - | - |
+| Manage Cyber Range | ✓ | ✓ | - | - | - | - |
+| Create Exercise | ✓ | ✓ | - | - | - | - |
+| View assigned Exercise | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| View participants | ✓ | ✓ | - | - | - | ✓* |
+| Add participant | ✓ | ✓ | - | - | - | - |
+| Remove participant | ✓ | ✓ | - | - | - | - |
+| Start Exercise | - | ✓ | - | - | - | ✓* |
+| Pause Exercise | - | ✓ | - | - | - | ✓* |
+| Resume Exercise | - | ✓ | - | - | - | ✓* |
+| Stop Exercise | - | ✓ | - | - | - | ✓* |
+| Reset Exercise | - | ✓ | - | - | - | ✓* |
+| Ingest Event | Service | Service | - | - | - | - |
+| View Exercise Events | ✓ | ✓ | - | - | Limited | ✓ |
+| View Evidence | ✓ | ✓ | - | - | Limited | ✓ |
+| View Assessment | ✓ | ✓ | - | - | ✓ | ✓ |
+| Run Assessment | - | ✓ | - | - | - | ✓ |
+| View Score | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Submit Incident Report | - | - | - | - | ✓ | - |
+| Review Incident Report | ✓ | ✓ | - | - | - | ✓ |
+| View Final Report | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| View Audit Logs | ✓ | Limited | - | - | - | - |
 
-`✓*` = chỉ khi White Team được phân công và Exercise Policy cho phép.
+`✓*` = WHITE chỉ được xem danh sách participant của Exercise được phân công. WHITE chỉ được Start/Pause/Resume/Stop/Reset Exercise khi được phân công. ADMIN không có quyền điều khiển vòng đời Exercise theo mặc định.
 
 Các quyền `Limited` phải được triển khai bằng resource-level authorization, không chỉ dựa trên System Role.
 
@@ -1987,7 +2011,7 @@ Backend phải bảo đảm User không thể truy cập resource của Exercise
 Ví dụ:
 
 ```http
-GET /api/exercises/100
+GET /api/v1/exercises/100
 ```
 
 Không có nghĩa là User có quyền xem Exercise `100`.
@@ -2169,7 +2193,7 @@ sort
 Ví dụ:
 
 ```http
-GET /api/exercises?page=0&size=20
+GET /api/v1/exercises?page=0&size=20
 ```
 
 Response:
@@ -2193,15 +2217,15 @@ Các API list có thể hỗ trợ filter tùy resource.
 Ví dụ:
 
 ```http
-GET /api/exercises?status=RUNNING
+GET /api/v1/exercises?status=RUNNING
 ```
 
 ```http
-GET /api/events?severity=HIGH
+GET /api/v1/events?severity=HIGH
 ```
 
 ```http
-GET /api/audit-logs?action=LOGIN
+GET /api/v1/audit-logs?action=LOGIN
 ```
 
 Filter cụ thể sẽ được triển khai theo từng module.
@@ -2255,7 +2279,6 @@ java
 @Email
 @Size
 
-
 ## Audit
 
 Các thao tác nhạy cảm phải tạo Audit Log.
@@ -2278,43 +2301,43 @@ API được ánh xạ với các Backend module:
 src/main/java/com/cyberrange/backend/
 
 ├── auth/
-│   └── /api/auth
+│   └── /api/v1/auth
 
 ├── user/
-│   └── /api/users
+│   └── /api/v1/users
 
 ├── team/
-│   └── /api/teams
+│   └── /api/v1/teams
 
 ├── scenario/
-│   ├── /api/scenarios
-│   ├── /api/tasks
-│   └── /api/criteria
+│   ├── /api/v1/scenarios
+│   ├── /api/v1/tasks
+│   └── /api/v1/criteria
 
 ├── lab/
-│   ├── /api/cyber-ranges
-│   ├── /api/assets
-│   └── /api/services
+│   ├── /api/v1/cyber-ranges
+│   ├── /api/v1/assets
+│   └── /api/v1/services
 
 ├── exercise/
-│   └── /api/exercises
+│   └── /api/v1/exercises
 
 ├── event/
-│   ├── /api/events
-│   └── /api/evidence
+│   ├── /api/v1/events
+│   └── /api/v1/evidence
 
 ├── assessment/
-│   └── /api/exercises/{id}/assessment
+│   └── /api/v1/exercises/{id}/assessment
 
 ├── scoring/
-│   └── /api/exercises/{id}/score
+│   └── /api/v1/exercises/{id}/score
 
 ├── report/
-│   ├── /api/exercises/{id}/report
-│   └── /api/exercises/{id}/incident-reports
+│   ├── /api/v1/exercises/{id}/report
+│   └── /api/v1/exercises/{id}/incident-reports
 
 └── audit/
-    └── /api/audit-logs
+    └── /api/v1/audit-logs
 ```
 
 ---
@@ -2323,109 +2346,109 @@ src/main/java/com/cyberrange/backend/
 
 ```text
 AUTH
-POST   /api/auth/login
-GET    /api/auth/me
+POST   /api/v1/auth/login
+GET    /api/v1/auth/me
 
 USERS
-GET    /api/users
-GET    /api/users/{id}
-POST   /api/users
-PATCH  /api/users/{id}
-PATCH  /api/users/{id}/status
+GET    /api/v1/users
+GET    /api/v1/users/{id}
+POST   /api/v1/users
+PATCH  /api/v1/users/{id}
+PATCH  /api/v1/users/{id}/status
 
 TEAMS
-GET    /api/teams
-GET    /api/teams/{id}
-POST   /api/teams
-PATCH  /api/teams/{id}
-GET    /api/teams/{id}/members
-POST   /api/teams/{id}/members
-DELETE /api/teams/{id}/members/{userId}
+GET    /api/v1/teams
+GET    /api/v1/teams/{id}
+POST   /api/v1/teams
+PATCH  /api/v1/teams/{id}
+GET    /api/v1/teams/{id}/members
+POST   /api/v1/teams/{id}/members
+DELETE /api/v1/teams/{id}/members/{userId}
 
 SCENARIOS
-GET    /api/scenarios
-GET    /api/scenarios/{id}
-POST   /api/scenarios
-PATCH  /api/scenarios/{id}
-POST   /api/scenarios/{id}/publish
-GET    /api/scenarios/{id}/tasks
+GET    /api/v1/scenarios
+GET    /api/v1/scenarios/{id}
+POST   /api/v1/scenarios
+PATCH  /api/v1/scenarios/{id}
+POST   /api/v1/scenarios/{id}/publish
+GET    /api/v1/scenarios/{id}/tasks
 
 TASKS
-POST   /api/scenarios/{id}/tasks
-PATCH  /api/tasks/{id}
+POST   /api/v1/scenarios/{id}/tasks
+PATCH  /api/v1/tasks/{id}
 
 CRITERIA
-GET    /api/tasks/{id}/criteria
-POST   /api/tasks/{id}/criteria
-PATCH  /api/criteria/{id}
+GET    /api/v1/tasks/{id}/criteria
+POST   /api/v1/tasks/{id}/criteria
+PATCH  /api/v1/criteria/{id}
 
 CYBER RANGES
-GET    /api/cyber-ranges
-GET    /api/cyber-ranges/{id}
-POST   /api/cyber-ranges
-PATCH  /api/cyber-ranges/{id}
+GET    /api/v1/cyber-ranges
+GET    /api/v1/cyber-ranges/{id}
+POST   /api/v1/cyber-ranges
+PATCH  /api/v1/cyber-ranges/{id}
 
 ASSETS
-GET    /api/cyber-ranges/{id}/assets
-POST   /api/cyber-ranges/{id}/assets
-GET    /api/assets/{id}
-PATCH  /api/assets/{id}
+GET    /api/v1/cyber-ranges/{id}/assets
+POST   /api/v1/cyber-ranges/{id}/assets
+GET    /api/v1/assets/{id}
+PATCH  /api/v1/assets/{id}
 
 SERVICES
-GET    /api/assets/{id}/services
-POST   /api/assets/{id}/services
-PATCH  /api/services/{id}
+GET    /api/v1/assets/{id}/services
+POST   /api/v1/assets/{id}/services
+PATCH  /api/v1/services/{id}
 
 EXERCISES
-GET    /api/exercises
-GET    /api/exercises/{id}
-POST   /api/exercises
-PATCH  /api/exercises/{id}
+GET    /api/v1/exercises
+GET    /api/v1/exercises/{id}
+POST   /api/v1/exercises
+PATCH  /api/v1/exercises/{id}
 
 PARTICIPANTS
-GET    /api/exercises/{id}/participants
-POST   /api/exercises/{id}/participants
-DELETE /api/exercises/{id}/participants/{participantId}
+GET    /api/v1/exercises/{id}/participants
+POST   /api/v1/exercises/{id}/participants
+DELETE /api/v1/exercises/{id}/participants/{participantId}
 
 EXERCISE CONTROL
-POST   /api/exercises/{id}/start
-POST   /api/exercises/{id}/pause
-POST   /api/exercises/{id}/resume
-POST   /api/exercises/{id}/stop
-POST   /api/exercises/{id}/reset
+POST   /api/v1/exercises/{id}/start
+POST   /api/v1/exercises/{id}/pause
+POST   /api/v1/exercises/{id}/resume
+POST   /api/v1/exercises/{id}/stop
+POST   /api/v1/exercises/{id}/reset
 
 EVENTS
-POST   /api/events
-GET    /api/exercises/{id}/events
-GET    /api/exercises/{id}/events/{eventId}
+POST   /api/v1/events
+GET    /api/v1/exercises/{id}/events
+GET    /api/v1/exercises/{id}/events/{eventId}
 
 EVIDENCE
-GET    /api/exercises/{id}/evidence
-GET    /api/exercises/{id}/evidence/{evidenceId}
+GET    /api/v1/exercises/{id}/evidence
+GET    /api/v1/exercises/{id}/evidence/{evidenceId}
 
 ASSESSMENT
-GET    /api/exercises/{id}/assessment
-GET    /api/exercises/{id}/assessment/results
-GET    /api/exercises/{id}/assessment/results/{resultId}
-POST   /api/exercises/{id}/assessment/run
+GET    /api/v1/exercises/{id}/assessment
+GET    /api/v1/exercises/{id}/assessment/results
+GET    /api/v1/exercises/{id}/assessment/results/{resultId}
+POST   /api/v1/exercises/{id}/assessment/run
 
 SCORING
-GET    /api/exercises/{id}/score
-GET    /api/exercises/{id}/score/details
+GET    /api/v1/exercises/{id}/score
+GET    /api/v1/exercises/{id}/score/details
 
 INCIDENT REPORT
-POST   /api/exercises/{id}/incident-reports
-GET    /api/exercises/{id}/incident-reports
-GET    /api/incident-reports/{id}
-PATCH  /api/incident-reports/{id}
-POST   /api/incident-reports/{id}/review
+POST   /api/v1/exercises/{id}/incident-reports
+GET    /api/v1/exercises/{id}/incident-reports
+GET    /api/v1/incident-reports/{id}
+PATCH  /api/v1/incident-reports/{id}
+POST   /api/v1/incident-reports/{id}/review
 
 REPORT
-GET    /api/exercises/{id}/report
+GET    /api/v1/exercises/{id}/report
 
 AUDIT
-GET    /api/audit-logs
-GET    /api/audit-logs/{id}
+GET    /api/v1/audit-logs
+GET    /api/v1/audit-logs/{id}
 ```
 
 ---

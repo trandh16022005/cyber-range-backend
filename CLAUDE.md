@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-## 1. Project Context
+# 1. Project Context
 
 This repository contains the backend of a **Cyber Range and Automated Defensive Skills Assessment System**.
 
@@ -8,56 +8,104 @@ The system is designed for cybersecurity training and defensive-skill assessment
 
 The backend is responsible for:
 
-* User and system-role management
-* Team management
-* Scenario management
-* Cyber Range and asset management
-* Exercise management
-* Event and evidence management
-* Automated assessment
-* Automated scoring
-* Incident report management
-* Audit logging
-* REST API for the frontend
+- User and system-role management
+- Team management
+- Scenario management
+- Cyber Range and asset management
+- Exercise management
+- Event and evidence management
+- Automated assessment
+- Automated scoring
+- Incident report management
+- Audit logging
+- REST API for the frontend
 
 The system supports Red Team, Blue Team, and White Team roles within an exercise.
 
-### Exercise Roles
+## Exercise Roles
 
-* `RED` — performs attack activities defined by the exercise
-* `BLUE` — performs defensive activities
-* `WHITE` — administers, monitors, controls, and reviews the exercise
+- `RED` — performs attack activities defined by the exercise.
+- `BLUE` — performs defensive activities.
+- `WHITE` — administers, monitors, controls, and reviews the exercise.
 
 White Team is an **exercise role**, not a system-level RBAC role.
 
-### System Roles
+## System Roles
 
-* `ADMIN`
-* `INSTRUCTOR`
-* `STUDENT`
+- `ADMIN`
+- `INSTRUCTOR`
+- `STUDENT`
 
 System roles and exercise roles are separate concepts.
 
 ---
 
-# 2. Source of Truth
+# 2. Documentation and Source of Truth
 
-Before modifying code, read the relevant documentation in `docs/`.
+Before modifying code, read `CLAUDE.md` and the relevant documentation in `docs/`.
 
-The following documents are the project's primary source of truth:
+The documentation is organized into the following groups.
 
-```text
-docs/
-├── 01-overview.md
-├── 02-architecture.md
-├── 03-database.md
-├── 04-security.md
-├── 05-api.md
-├── 06-assessment-and-scoring.md
-└── 07-project-structure-coding-convention.md
-```
+## 2.1 Core Project Documentation
 
-### Priority
+These documents define the overall system:
+
+| Document | Purpose |
+|---|---|
+| [01-overview.md](docs/01-overview.md) | Project goals, scope, and core concepts |
+| [02-architecture.md](docs/02-architecture.md) | System architecture and component responsibilities |
+| [03-database.md](docs/03-database.md) | Database design and entity relationships |
+| [04-security.md](docs/04-security.md) | Authentication, authorization, and security rules |
+| [05-api.md](docs/05-api.md) | REST API contract |
+| [06-assessment-and-scoring.md](docs/06-assessment-and-scoring.md) | Overall assessment and scoring specification |
+| [07-project-structure-coding-convention.md](docs/07-project-structure-coding-convention.md) | Package structure and coding conventions |
+
+## 2.2 Blue Team Documentation
+
+Read these documents when implementing or modifying defensive workflows:
+
+| Document | Purpose |
+|---|---|
+| [Blue Team Overview](docs/blue-team/overview.md) | Blue Team responsibilities and defensive workflow |
+| [Detection](docs/blue-team/detection.md) | Detection concepts and defensive event analysis |
+| [Incident Response](docs/blue-team/incident-response.md) | Incident response and containment workflow |
+| [Blue Team Assessment](docs/blue-team/assessment.md) | Blue Team assessment and evaluation |
+
+## 2.3 Assessment Documentation
+
+Read these documents when working on assessment, scoring, or performance metrics:
+
+| Document | Purpose |
+|---|---|
+| [Assessment Engine](docs/assessment/assessment-engine.md) | Assessment Engine responsibilities and evaluation logic |
+| [Scoring](docs/assessment/scoring.md) | Scoring rules and score calculation |
+| [Metrics](docs/assessment/metrics.md) | Detection time, response time, and other assessment metrics |
+
+## 2.4 Scenario Documentation
+
+Read these documents when implementing or modifying scenario-related functionality:
+
+| Document | Purpose |
+|---|---|
+| [Scenario Overview](docs/scenarios/overview.md) | Scenario concepts and structure |
+| [Port Scanning](docs/scenarios/port-scanning.md) | Port scanning scenario |
+| [SSH Brute Force](docs/scenarios/ssh-brute-force.md) | SSH brute-force scenario |
+| [Web Attack](docs/scenarios/web-attack.md) | Web attack scenario |
+
+## 2.5 Documentation Reading Rules
+
+Select documents according to the task:
+
+- User or authentication tasks: read the relevant core, security, database, and API documents.
+- Blue Team tasks: read the relevant Blue Team documents and related assessment/scoring documents.
+- Assessment tasks: read the Assessment Engine, Scoring, Metrics, and overall assessment specification.
+- Scenario tasks: read Scenario Overview and the specific scenario document.
+- Database tasks: read the database design before changing entities or relationships.
+- API tasks: read the API contract before adding or modifying endpoints.
+
+Do not read every document unnecessarily. Read the documents that directly affect the requested task and its dependencies.
+
+## Documentation Priority
 
 When implementing a feature:
 
@@ -65,7 +113,7 @@ When implementing a feature:
 2. Follow the architecture and database design.
 3. Follow the API contract.
 4. Follow the security rules.
-5. Follow the assessment/scoring design.
+5. Follow the relevant Blue Team, scenario, assessment, and scoring specifications.
 6. Follow the coding conventions.
 
 Do **not** invent a new architecture, database entity, API contract, security model, or assessment model when an existing design already defines it.
@@ -78,16 +126,16 @@ If requirements conflict with the documentation, stop and ask for clarification 
 
 The backend uses:
 
-* Java 21
-* Spring Boot
-* Spring Web
-* Spring Data JPA
-* Spring Security
-* JWT
-* Bean Validation
-* PostgreSQL
-* Maven
-* JUnit
+- Java 21
+- Spring Boot
+- Spring Web
+- Spring Data JPA
+- Spring Security
+- JWT
+- Bean Validation
+- PostgreSQL
+- Maven
+- JUnit
 
 Use the existing dependencies and project configuration in `pom.xml`.
 
@@ -128,61 +176,61 @@ feature/
 └── mapper/
 ```
 
-### Layer responsibilities
+## Layer Responsibilities
 
-#### Controller
+### Controller
 
 Responsible for:
 
-* HTTP endpoints
-* Request parameters
-* Request/response DTOs
-* HTTP status codes
+- HTTP endpoints
+- Request parameters
+- Request/response DTOs
+- HTTP status codes
 
 Controllers should not contain complex business logic.
 
-#### Service
+### Service
 
 Responsible for:
 
-* Business logic
-* Authorization decisions that depend on business context
-* Transaction boundaries
-* Coordination between repositories and other services
+- Business logic
+- Authorization decisions that depend on business context
+- Transaction boundaries
+- Coordination between repositories and other services
 
-#### Repository
+### Repository
 
 Responsible for:
 
-* Database access
-* Query methods
-* Persistence operations
+- Database access
+- Query methods
+- Persistence operations
 
 Do not put business logic in repositories.
 
-#### Entity
+### Entity
 
 Responsible for:
 
-* Database persistence mapping
-* Entity relationships
-* Persistent state
+- Database persistence mapping
+- Entity relationships
+- Persistent state
 
 Do not expose JPA entities directly as public API contracts when DTOs are appropriate.
 
-#### DTO
+### DTO
 
 Use DTOs for API requests and responses.
 
 Do not allow API clients to directly control internal fields such as:
 
-* assessment status
-* awarded score
-* total score
-* audit information
-* system-controlled timestamps
+- Assessment status
+- Awarded score
+- Total score
+- Audit information
+- System-controlled timestamps
 
-#### Mapper
+### Mapper
 
 Responsible for converting between:
 
@@ -245,18 +293,24 @@ active_directory
 
 unless the architecture documentation is explicitly changed.
 
-### Important relationships
+## Important Relationships
 
-* Users belong to teams through `team_members`.
-* Scenarios define reusable exercise templates.
-* Exercises are actual executions of scenarios.
-* Exercise participants connect users to exercises and define exercise roles.
-* Events represent observed/raw events.
-* Evidence represents assessment-relevant evidence.
-* Assessment results represent task completion.
-* Assessment scores represent awarded points for criteria.
-* Incident reports represent Blue Team reporting.
-* Audit logs record security-sensitive system actions.
+- Users belong to teams through `team_members`.
+- Scenarios define reusable exercise templates.
+- Exercises are actual executions of scenarios.
+- Exercise participants connect users to exercises and define exercise roles.
+- Events represent observed/raw events.
+- Evidence represents assessment-relevant evidence.
+- Assessment results represent defensive task assessment outcomes.
+- Assessment scores represent awarded points.
+- Incident reports represent Blue Team reporting.
+- Audit logs record security-sensitive system actions.
+
+The existing database design is the source of truth for entity fields, relationships, constraints, and table mappings.
+
+Do not assume a field or relationship exists without checking `docs/03-database.md` and the existing SQL schema.
+
+Do not change the database schema merely to simplify an implementation.
 
 ---
 
@@ -264,17 +318,17 @@ unless the architecture documentation is explicitly changed.
 
 Security rules defined in `docs/04-security.md` must be enforced server-side.
 
-### Authentication
+## Authentication
 
 Use JWT-based authentication for the V1 API.
 
 Passwords must:
 
-* never be stored in plaintext
-* never be logged
-* never be returned through API responses
+- Never be stored in plaintext.
+- Never be logged.
+- Never be returned through API responses.
 
-### Authorization
+## Authorization
 
 System RBAC:
 
@@ -298,44 +352,44 @@ For exercise-specific authorization, verify the user's participation in the spec
 
 Do not rely only on a role value supplied by the client.
 
-### Exercise isolation
+## Exercise Isolation
 
 A user must only access exercises and resources they are authorized to access.
 
 Do not expose another exercise's:
 
-* events
-* evidence
-* assessment results
-* scores
-* incident reports
-* participants
+- Events
+- Evidence
+- Assessment results
+- Scores
+- Incident reports
+- Participants
 
-### Server-controlled assessment
+## Server-Controlled Assessment
 
 Clients must not be allowed to directly submit:
 
-* final score
-* awarded score
-* assessment result
-* task completion status
-* detection time
-* response time
+- Final score
+- Awarded score
+- Assessment result
+- Task completion status
+- Detection time
+- Response time
 
 These values must be calculated or validated by the backend.
 
-### Audit
+## Audit
 
 Sensitive actions should be auditable.
 
 Examples include:
 
-* login/security events
-* exercise state changes
-* participant changes
-* assessment operations
-* score-related operations
-* administrative operations
+- Login/security events
+- Exercise state changes
+- Participant changes
+- Assessment operations
+- Score-related operations
+- Administrative operations
 
 Never put passwords, JWTs, secrets, or other sensitive credentials into logs.
 
@@ -349,23 +403,31 @@ The pipeline is:
 
 ```text
 Cyber Range
-     ↓
+    ↓
 Events
-     ↓
+    ↓
 Evidence
-     ↓
+    ↓
 Assessment Engine
-     ↓
+    ↓
 Assessment Result
-     ↓
+    ↓
 Scoring Engine
-     ↓
+    ↓
 Assessment Score
-     ↓
+    ↓
 Report
 ```
 
-### Important distinction
+Read the following documents before changing this functionality:
+
+- `docs/06-assessment-and-scoring.md`
+- `docs/assessment/assessment-engine.md`
+- `docs/assessment/scoring.md`
+- `docs/assessment/metrics.md`
+- `docs/blue-team/assessment.md`
+
+## Important Distinction
 
 Do not confuse:
 
@@ -378,38 +440,128 @@ Score
 
 They are different concepts.
 
-### Assessment Engine
+## Assessment Engine
 
-The Assessment Engine determines whether a defensive task has been completed based on observable evidence.
+The Assessment Engine determines whether a defensive task has been completed based on observable evidence and configured assessment criteria.
 
 It must not depend on a value submitted by the client.
 
-### Scoring Engine
+## Scoring Engine
 
 The Scoring Engine calculates points after assessment results are determined.
 
 The client must never be trusted to calculate or submit the final score.
 
-### V1 task scoring
+## Assessment Result Statuses
 
-Current V1 scoring:
+The only valid V1 Assessment Result statuses are:
 
-| Criterion                 |  Points |
-| ------------------------- | ------: |
-| Detect port scan          |      10 |
-| Detect brute force        |      10 |
-| Detect web attack         |      15 |
-| Identify compromised host |      15 |
-| Isolate attacked host     |      20 |
-| Recover service           |      20 |
-| Incident report           |      10 |
-| **Total**                 | **100** |
+```text
+PENDING
+IN_PROGRESS
+COMPLETED
+FAILED
+NOT_APPLICABLE
+```
 
-Scoring rules should remain configurable and extensible.
+Do not introduce `NOT_COMPLETED` or other status values without an approved documentation change.
 
-Do not hard-code task IDs as the only way to determine scoring.
+`PENDING` and `IN_PROGRESS` must not automatically be treated as `FAILED`.
 
-### Time metrics
+`NOT_APPLICABLE` means the task does not apply to the current exercise assessment. It must be deliberately determined and justified, not selected freely by a participant.
+
+Where supported by the database design, record the reason and audit relevant changes to applicability.
+
+## Exercise Statuses
+
+Exercise status is separate from Assessment Result status.
+
+The valid V1 Exercise statuses are:
+
+```text
+CREATED
+READY
+RUNNING
+PAUSED
+STOPPED
+COMPLETED
+CANCELLED
+```
+
+`RESET` is an action, not an Exercise status.
+
+After a successful reset, the Exercise returns to `READY`. If environment initialization is unsuccessful, it returns to `CREATED`.
+
+Do not mix Exercise lifecycle states with defensive task assessment states.
+
+## V1 Task Scoring
+
+The current V1 task weights are:
+
+| Defensive Task | Maximum Points |
+|---|---:|
+| Detect port scan | 10 |
+| Detect brute force | 10 |
+| Detect web attack | 15 |
+| Identify compromised host | 15 |
+| Isolate attacked host | 20 |
+| Recover service | 20 |
+| Incident report | 10 |
+| **Total** | **100** |
+
+These weights are configured task maximums. Do not award the same task weight repeatedly through multiple criteria.
+
+Assessment criteria determine whether the task has been completed. The Scoring Engine awards the configured task points according to the V1 scoring rules.
+
+## NOT_APPLICABLE Scoring Rule
+
+Tasks with status `NOT_APPLICABLE` must be excluded from both:
+
+- Total earned points.
+- Applicable maximum points.
+
+The final score is normalized against the maximum points of applicable tasks:
+
+```text
+Applicable Maximum Points =
+    Sum of maximum points for tasks not marked NOT_APPLICABLE
+
+Final Score =
+    (Total Earned Points / Applicable Maximum Points) × 100
+```
+
+Example:
+
+```text
+All task weights                         = 100
+One task marked NOT_APPLICABLE           = 10
+Applicable maximum points                = 90
+Total earned points                      = 75
+
+Final Score = (75 / 90) × 100 = 83.33
+```
+
+If the applicable maximum points equal zero, the final score must be unavailable/undefined. Do not divide by zero or represent the result as `NaN` or an artificial score of zero.
+
+## Task Scoring and Finalization
+
+For V1 binary task scoring:
+
+- `COMPLETED`: earns the configured task maximum points.
+- `FAILED`: earns zero points.
+- `NOT_APPLICABLE`: excluded from the numerator and denominator.
+- `PENDING`: not finalized.
+- `IN_PROGRESS`: not finalized.
+
+Do not automatically convert unresolved tasks into `FAILED`.
+
+A final score must not be marked as finalized while applicable tasks remain `PENDING` or `IN_PROGRESS`. A provisional score may be displayed during an exercise, but it must be clearly identified as provisional.
+
+Awarded points must never exceed the configured maximum points.
+
+Do not duplicate a task's maximum points across multiple assessment criteria.
+
+## Time Metrics
 
 Detection time:
 
@@ -425,9 +577,66 @@ Response Time = T_response - T_detect
 
 Store timestamps and calculated durations according to the database design.
 
+Use `docs/assessment/metrics.md` as the detailed reference for metric definitions and calculations.
+
 ---
 
-# 8. API Rules
+# 8. Blue Team Rules
+
+Blue Team functionality must follow the specifications in:
+
+```text
+docs/blue-team/overview.md
+docs/blue-team/detection.md
+docs/blue-team/incident-response.md
+docs/blue-team/assessment.md
+```
+
+Important principles:
+
+- Blue Team performs defensive activities within an assigned exercise.
+- Detection must be based on observable events and evidence.
+- Incident response must follow the documented defensive workflow.
+- Assessment must evaluate defensive outcomes using configured criteria.
+- Assessment results must remain traceable to their supporting evidence.
+- White Team reviews and monitors exercise results.
+
+Do not introduce unrelated offensive functionality into Blue Team modules.
+
+Do not treat a participant's unverified claim as sufficient evidence of task completion.
+
+---
+
+# 9. Scenario Rules
+
+Scenario functionality must follow:
+
+```text
+docs/scenarios/overview.md
+docs/scenarios/port-scanning.md
+docs/scenarios/ssh-brute-force.md
+docs/scenarios/web-attack.md
+```
+
+V1 scenarios include:
+
+- Port Scanning
+- SSH Brute Force
+- Web Attack
+
+Important principles:
+
+- A Scenario is a reusable exercise template.
+- An Exercise is an execution of a Scenario.
+- Scenario tasks and assessment criteria must follow the documented design.
+- Scenario-specific assessment rules must not conflict with the overall assessment specification.
+- Do not hard-code scenario IDs or task IDs as the only way to identify scenario behavior.
+
+When adding or changing a scenario, check its relationship with defensive tasks, assessment criteria, events, and evidence.
+
+---
+
+# 10. API Rules
 
 Follow the API contract defined in:
 
@@ -435,21 +644,23 @@ Follow the API contract defined in:
 docs/05-api.md
 ```
 
+Use the `/api/v1` API prefix.
+
 Use REST-style resource endpoints.
 
-Examples:
+Examples of resource groups:
 
 ```text
-/api/auth
-/api/users
-/api/teams
-/api/scenarios
-/api/cyber-ranges
-/api/exercises
-/api/events
-/api/assessment
-/api/incident-reports
-/api/audit-logs
+/api/v1/auth
+/api/v1/users
+/api/v1/teams
+/api/v1/scenarios
+/api/v1/cyber-ranges
+/api/v1/exercises
+/api/v1/events
+/api/v1/assessment
+/api/v1/incident-reports
+/api/v1/audit-logs
 ```
 
 Use action endpoints only when an operation represents a state transition.
@@ -457,11 +668,11 @@ Use action endpoints only when an operation represents a state transition.
 Examples:
 
 ```text
-POST /api/exercises/{id}/start
-POST /api/exercises/{id}/pause
-POST /api/exercises/{id}/resume
-POST /api/exercises/{id}/stop
-POST /api/exercises/{id}/reset
+POST /api/v1/exercises/{id}/start
+POST /api/v1/exercises/{id}/pause
+POST /api/v1/exercises/{id}/resume
+POST /api/v1/exercises/{id}/stop
+POST /api/v1/exercises/{id}/reset
 ```
 
 Do not create unnecessary endpoints.
@@ -470,7 +681,7 @@ Before adding a new endpoint, check whether the existing API contract already co
 
 ---
 
-# 9. Validation and Error Handling
+# 11. Validation and Error Handling
 
 Use Bean Validation for API input validation.
 
@@ -481,37 +692,41 @@ java
 @Email
 @Size
 @NotNull
+```
 
 Use centralized exception handling with:
 
-```text
+```java
 @RestControllerAdvice
 ```
 
 API errors should have a consistent structure.
 
-Do not expose:
+Use the documented HTTP status conventions, including:
 
-* stack traces
-* internal exception details
-* database credentials
-* sensitive configuration
-* security-sensitive implementation details
+- `400 Bad Request` for validation errors.
+- `409 Conflict` for invalid state transitions or state conflicts.
 
-to API clients.
+Do not expose the following to API clients:
+
+- Stack traces
+- Internal exception details
+- Database credentials
+- Sensitive configuration
+- Security-sensitive implementation details
 
 ---
 
-# 10. Transaction Rules
+# 12. Transaction Rules
 
 Use transactions where multiple database operations must succeed or fail together.
 
 Examples:
 
-* creating an exercise and its participants
-* changing exercise state with related records
-* creating assessment results and scores
-* updating related assessment information
+- Creating an exercise and its participants.
+- Changing exercise state with related records.
+- Creating assessment results and scores.
+- Updating related assessment information.
 
 Avoid unnecessarily large transactions.
 
@@ -519,7 +734,7 @@ Keep transaction boundaries primarily in the service layer.
 
 ---
 
-# 11. Logging Rules
+# 13. Logging Rules
 
 Use application logs for debugging and operational information.
 
@@ -539,20 +754,31 @@ Logs should contain enough context to diagnose problems without exposing sensiti
 
 ---
 
-# 12. Testing Rules
+# 14. Testing Rules
 
 Every new business feature should have appropriate tests.
 
 Prioritize tests for:
 
-1. Service business logic
-2. Security and authorization
-3. Assessment Engine
-4. Scoring Engine
-5. API validation
-6. Repository behavior when necessary
+1. Service business logic.
+2. Security and authorization.
+3. Assessment Engine.
+4. Scoring Engine.
+5. API validation.
+6. Repository behavior when necessary.
 
 Assessment and scoring logic should have strong automated test coverage because incorrect scoring directly affects exercise results.
+
+Important scoring test cases include:
+
+- `COMPLETED` tasks receive their configured points.
+- `FAILED` tasks receive zero points.
+- `NOT_APPLICABLE` tasks are excluded from the applicable maximum.
+- `PENDING` and `IN_PROGRESS` do not automatically become failures.
+- Final scores are normalized against applicable maximum points.
+- Zero applicable maximum points do not cause division by zero.
+- Awarded points cannot exceed task maximum points.
+- A task's points are not awarded more than once.
 
 Before considering a task complete, run the relevant tests.
 
@@ -572,7 +798,7 @@ If formatting or static analysis tools are configured, use them as appropriate.
 
 ---
 
-# 13. Code Quality Rules
+# 15. Code Quality Rules
 
 Follow the conventions in:
 
@@ -582,30 +808,30 @@ docs/07-project-structure-coding-convention.md
 
 Use:
 
-* clear names
-* small focused methods
-* meaningful DTOs
-* clear service boundaries
-* constructor injection
-* consistent exception handling
-* consistent API responses
+- Clear names.
+- Small focused methods.
+- Meaningful DTOs.
+- Clear service boundaries.
+- Constructor injection.
+- Consistent exception handling.
+- Consistent API responses.
 
 Avoid:
 
-* unnecessary abstractions
-* duplicated business logic
-* giant service classes
-* giant controllers
-* magic numbers
-* hard-coded business rules where configuration is appropriate
-* premature microservices
-* unnecessary design patterns
+- Unnecessary abstractions.
+- Duplicated business logic.
+- Giant service classes.
+- Giant controllers.
+- Magic numbers.
+- Hard-coded business rules where configuration is appropriate.
+- Premature microservices.
+- Unnecessary design patterns.
 
 Prefer the simplest implementation that satisfies the documented architecture.
 
 ---
 
-# 14. Scope Control
+# 16. Scope Control
 
 Work only on the requested task.
 
@@ -613,11 +839,11 @@ Do not modify unrelated modules unless necessary.
 
 For example, if implementing the Team module, do not redesign:
 
-* Assessment
-* Scoring
-* Authentication
-* Database architecture
-* API architecture
+- Assessment
+- Scoring
+- Authentication
+- Database architecture
+- API architecture
 
 without a clear requirement.
 
@@ -632,11 +858,11 @@ Do not perform large refactors while implementing an unrelated feature.
 
 ---
 
-# 15. Documentation Consistency
+# 17. Documentation Consistency
 
 When implementation changes a documented contract, check whether the documentation must also be updated.
 
-Important documents:
+Relevant documents include:
 
 ```text
 docs/01-overview.md
@@ -646,15 +872,36 @@ docs/04-security.md
 docs/05-api.md
 docs/06-assessment-and-scoring.md
 docs/07-project-structure-coding-convention.md
+
+docs/blue-team/overview.md
+docs/blue-team/detection.md
+docs/blue-team/incident-response.md
+docs/blue-team/assessment.md
+
+docs/assessment/assessment-engine.md
+docs/assessment/scoring.md
+docs/assessment/metrics.md
+
+docs/scenarios/overview.md
+docs/scenarios/port-scanning.md
+docs/scenarios/ssh-brute-force.md
+docs/scenarios/web-attack.md
 ```
 
 Do not silently change the documented design.
 
-If the implementation requires a design change, identify the affected document before making the change.
+If the implementation requires a design change:
+
+1. Identify the affected documents.
+2. Check for conflicts with related specifications.
+3. Update the relevant documentation consistently.
+4. Explain the design change in the final report.
+
+Do not update unrelated documents unnecessarily.
 
 ---
 
-# 16. Git and Team Collaboration
+# 18. Git and Team Collaboration
 
 This is a two-person development project.
 
@@ -673,7 +920,7 @@ Do not overwrite another developer's unfinished work.
 
 Do not modify or delete unrelated changes.
 
-### Commit principles
+## Commit Principles
 
 Use clear commits describing one logical change.
 
@@ -710,13 +957,15 @@ git diff
 
 Review the changes and make sure only intended files are included.
 
+Prefer staging specific files instead of blindly staging the entire working tree.
+
 ---
 
-# 17. Claude Code Workflow
+# 19. Claude Code Workflow
 
 When starting a task:
 
-### Step 1 — Understand
+## Step 1 — Understand
 
 Read:
 
@@ -724,38 +973,36 @@ Read:
 CLAUDE.md
 ```
 
-Then read only the relevant documents from:
+Then read only the relevant documents from `docs/`, following the Documentation Reading Rules in Section 2.
 
-```text
-docs/01-overview.md
-docs/02-architecture.md
-docs/03-database.md
-docs/04-security.md
-docs/05-api.md
-docs/06-assessment-and-scoring.md
-docs/07-project-structure-coding-convention.md
-```
+For example:
 
-### Step 2 — Inspect
+- Assessment implementation: read the assessment specification, Assessment Engine, Scoring, and Metrics documents.
+- Blue Team detection: read Blue Team Overview and Detection.
+- Incident response: read Blue Team Overview and Incident Response.
+- Scenario implementation: read Scenario Overview and the relevant scenario specification.
+
+## Step 2 — Inspect
 
 Inspect the existing code before creating new files.
 
 Do not assume that a class, endpoint, entity, or service does not already exist.
 
-### Step 3 — Plan
+## Step 3 — Plan
 
 Identify:
 
-* files that need to change
-* existing code that can be reused
-* dependencies with other modules
-* tests that should be added
+- Files that need to change.
+- Existing code that can be reused.
+- Dependencies with other modules.
+- Tests that should be added.
+- Documentation that may be affected.
 
-### Step 4 — Implement
+## Step 4 — Implement
 
 Implement the smallest complete solution consistent with the project documentation.
 
-### Step 5 — Test
+## Step 5 — Test
 
 Run relevant tests.
 
@@ -765,7 +1012,7 @@ For backend changes, normally run:
 .\mvnw.cmd test
 ```
 
-### Step 6 — Review
+## Step 6 — Review
 
 Review:
 
@@ -776,47 +1023,50 @@ git status
 
 Check for:
 
-* unintended changes
-* security issues
-* missing validation
-* broken API contracts
-* duplicated logic
-* missing tests
+- Unintended changes.
+- Security issues.
+- Missing validation.
+- Broken API contracts.
+- Duplicated logic.
+- Missing tests.
+- Inconsistencies with documentation.
 
-### Step 7 — Report
+## Step 7 — Report
 
 Clearly report:
 
-* what was changed
-* which files were changed
-* tests executed
-* any remaining issues
-* any documentation that may need updating
+- What was changed.
+- Which files were changed.
+- Tests executed.
+- Any remaining issues.
+- Any documentation that may need updating.
 
 ---
 
-# 18. Rules for Ambiguous Requirements
+# 20. Rules for Ambiguous Requirements
 
 When a requirement is ambiguous, do not invent important architectural behavior.
 
 Ask for clarification when ambiguity affects:
 
-* database schema
-* API contract
-* authentication
-* authorization
-* assessment logic
-* scoring rules
-* exercise roles
-* system roles
-* architecture
-* data ownership
+- Database schema.
+- API contract.
+- Authentication.
+- Authorization.
+- Assessment logic.
+- Scoring rules.
+- Exercise roles.
+- System roles.
+- Architecture.
+- Data ownership.
 
 For minor implementation details, choose the simplest solution consistent with the existing documentation.
 
+If two documents conflict, identify the conflict and ask for clarification rather than silently choosing a new design.
+
 ---
 
-# 19. Important Project Constraints
+# 21. Important Project Constraints
 
 Always preserve these principles:
 
@@ -831,27 +1081,30 @@ Always preserve these principles:
 9. Authorization must be enforced server-side.
 10. Exercise data must be isolated between users/exercises.
 11. Assessment and scoring must remain traceable to evidence.
-12. V1 should remain simple and extensible.
-13. Do not introduce unnecessary technologies or architectural complexity.
-14. Do not silently change the project's documented architecture.
+12. `NOT_APPLICABLE` tasks are excluded from the applicable maximum score.
+13. `PENDING` and `IN_PROGRESS` must not automatically be treated as `FAILED`.
+14. Exercise statuses and Assessment Result statuses are separate.
+15. V1 should remain simple and extensible.
+16. Do not introduce unnecessary technologies or architectural complexity.
+17. Do not silently change the project's documented architecture.
 
 ---
 
-# 20. Definition of Done
+# 22. Definition of Done
 
 A task is considered complete when:
 
-* The implementation follows the documented architecture.
-* Security rules are respected.
-* API behavior matches the API contract.
-* Database changes match the database design.
-* Relevant validation is implemented.
-* Relevant tests are added or updated.
-* Tests pass.
-* No secrets are introduced.
-* No unrelated files are modified unnecessarily.
-* Documentation is updated when a documented contract changes.
-* The final diff has been reviewed.
+- The implementation follows the documented architecture.
+- Security rules are respected.
+- API behavior matches the API contract.
+- Database changes match the database design.
+- Relevant validation is implemented.
+- Relevant tests are added or updated.
+- Tests pass.
+- No secrets are introduced.
+- No unrelated files are modified unnecessarily.
+- Documentation is updated when a documented contract changes.
+- The final diff has been reviewed.
 
 The goal is not simply to make the code work.
 

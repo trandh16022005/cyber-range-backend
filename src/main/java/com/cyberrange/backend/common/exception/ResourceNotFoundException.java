@@ -1,4 +1,3 @@
-
 package com.cyberrange.backend.common.exception;
 
 /**

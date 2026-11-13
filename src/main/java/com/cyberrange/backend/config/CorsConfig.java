@@ -1,4 +1,3 @@
-
 package com.cyberrange.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;

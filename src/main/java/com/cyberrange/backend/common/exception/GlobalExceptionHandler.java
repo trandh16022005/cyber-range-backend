@@ -1,24 +1,17 @@
-
 package com.cyberrange.backend.common.exception;
 
 import com.cyberrange.backend.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Handles application exceptions globally.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Handles resource not found exceptions.
-     *
-     * @param exception the exception
-     * @return HTTP 404 response
-     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
             ResourceNotFoundException exception
@@ -32,12 +25,6 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
-    /**
-     * Handles business rule violations.
-     *
-     * @param exception the exception
-     * @return HTTP 409 response
-     */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(
             BusinessException exception
@@ -51,12 +38,45 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
-    /**
-     * Handles unexpected exceptions.
-     *
-     * @param exception the exception
-     * @return HTTP 500 response
-     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
+            BadCredentialsException exception
+    ) {
+        ApiResponse<Void> response = ApiResponse.error(
+                "Invalid username or password"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(response);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDisabledAccount(
+            DisabledException exception
+    ) {
+        ApiResponse<Void> response = ApiResponse.error(
+                "Account is not active"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
+            AccessDeniedException exception
+    ) {
+        ApiResponse<Void> response = ApiResponse.error(
+                "Access denied"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(
             Exception exception

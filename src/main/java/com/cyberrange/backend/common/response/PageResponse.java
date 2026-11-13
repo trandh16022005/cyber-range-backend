@@ -1,4 +1,3 @@
-
 package com.cyberrange.backend.common.response;
 
 import org.springframework.data.domain.Page;

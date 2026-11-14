@@ -8,6 +8,7 @@ import com.cyberrange.backend.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    // Get users with search, filter and pagination
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
@@ -43,6 +45,22 @@ public class UserController {
                 ApiResponse.success(
                         "Users retrieved successfully",
                         users
+                )
+        );
+    }
+
+    // Get user details by ID
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(
+            @PathVariable Long id
+    ) {
+        UserResponse user = userService.getUserById(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "User retrieved successfully",
+                        user
                 )
         );
     }

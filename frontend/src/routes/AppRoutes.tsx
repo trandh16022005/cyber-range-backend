@@ -12,6 +12,7 @@ import DashboardLayout from '../layouts/DashboardLayout'
 
 import LoginPage from '../features/auth/LoginPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
+import UserManagementPage from '../features/users/UserManagementPage'
 
 import ProtectedRoute from './ProtectedRoute'
 
@@ -31,6 +32,11 @@ function AppRoutes() {
                             <Route
                                 path="/dashboard"
                                 element={<DashboardPage />}
+                            />
+
+                            <Route
+                                path="/users"
+                                element={<UserManagementPage />}
                             />
                         </Route>
                     </Route>

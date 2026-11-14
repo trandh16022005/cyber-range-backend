@@ -1,2 +1,6 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+
+# Include frontend TypeScript source in GitHub language statistics
+/frontend/src/**/*.ts linguist-detectable=true
+/frontend/src/**/*.tsx linguist-detectable=true

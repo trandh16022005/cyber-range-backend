@@ -5,6 +5,9 @@ import com.cyberrange.backend.common.response.PageResponse;
 import com.cyberrange.backend.user.dto.UserResponse;
 import com.cyberrange.backend.user.service.UserService;
 
+import com.cyberrange.backend.user.dto.CreateUserRequest;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +63,22 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "User retrieved successfully",
+                        user
+                )
+        );
+    }
+
+    // Create a new user
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(
+            @RequestBody CreateUserRequest request
+    ) {
+        UserResponse user = userService.createUser(request);
+
+        return ResponseEntity.status(201).body(
+                ApiResponse.success(
+                        "User created successfully",
                         user
                 )
         );

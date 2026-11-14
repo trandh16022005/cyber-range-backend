@@ -2,6 +2,7 @@ import api from '../../services/api'
 
 import type {
     ApiResponse,
+    CreateUserRequest,
     PageResponse,
     User,
     UserRole,
@@ -25,6 +26,15 @@ export const userService = {
             {
                 params,
             },
+        )
+
+        return response.data.data
+    },
+
+    async createUser(data: CreateUserRequest): Promise<User> {
+        const response = await api.post<ApiResponse<User>>(
+            '/users',
+            data,
         )
 
         return response.data.data

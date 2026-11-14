@@ -2,6 +2,14 @@ export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT'
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED'
 
+export interface CreateUserRequest {
+    username: string
+    email: string
+    password: string
+    fullName: string
+    role: UserRole
+}
+
 export interface User {
     id: number
     username: string

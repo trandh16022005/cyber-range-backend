@@ -180,6 +180,14 @@ public class TeamService {
         teamMemberRepository.deleteByTeam_IdAndUser_Id(teamId, userId);
     }
 
+    // 8. Delete team
+    @Transactional
+    public void deleteTeam(Long teamId) {
+        Team team = findTeamById(teamId);
+
+        teamRepository.delete(team);
+    }
+
     // Find team or throw 404
     private Team findTeamById(Long teamId) {
         if (teamId == null) {

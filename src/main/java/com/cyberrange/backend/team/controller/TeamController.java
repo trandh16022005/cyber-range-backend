@@ -134,5 +134,21 @@ public class TeamController {
                 )
         );
     }
+
+    // 8. Delete team (ADMIN only)
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteTeam(
+            @PathVariable Long id
+    ) {
+        teamService.deleteTeam(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Team deleted successfully",
+                        null
+                )
+        );
+    }
 }
 

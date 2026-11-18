@@ -1,6 +1,7 @@
 package com.cyberrange.backend.user.service;
 
 import com.cyberrange.backend.common.exception.ResourceNotFoundException;
+import com.cyberrange.backend.common.exception.BusinessException;
 import com.cyberrange.backend.common.response.PageResponse;
 import com.cyberrange.backend.user.dto.CreateUserRequest;
 import com.cyberrange.backend.user.dto.UserResponse;
@@ -16,7 +17,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.cyberrange.backend.common.exception.BusinessException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -39,27 +39,39 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Get users with search, filter and pagination
+    // ADMIN: Can view all users with optional filters.
+    // INSTRUCTOR: Can only view ACTIVE STUDENT accounts.
     public PageResponse<UserResponse> getUsers(
             String keyword,
             String role,
             String status,
             int page,
-            int size
+            int size,
+            boolean instructorOnly
     ) {
 
         // Normalize optional filters
         keyword = normalize(keyword);
+        role = normalize(role);
+        status = normalize(status);
 
         if (keyword == null) {
             keyword = "";
         }
 
-        role = normalize(role);
-        status = normalize(status);
+        // Restrict INSTRUCTOR to ACTIVE STUDENT accounts.
+        // Ignore role and status parameters sent by the frontend.
+        if (instructorOnly) {
+            role = "STUDENT";
+            status = "ACTIVE";
+        }
 
         // Validate pagination
         if (page < 0) {
-            throw new IllegalArgumentException("Page must not be negative");
+            throw new IllegalArgumentException(
+                    "Page must not be negative"
+            );
         }
 
         if (size < 1 || size > 100) {
@@ -88,6 +100,13 @@ public class UserService {
 
     // Get user details by ID
     public UserResponse getUserById(Long id) {
+
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException(
+                    "User ID must be a positive number"
+            );
+        }
+
         return userRepository.findById(id)
                 .map(UserResponse::fromEntity)
                 .orElseThrow(() ->
@@ -132,7 +151,9 @@ public class UserService {
         // Validate email
         if (email.length() > 255
                 || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new IllegalArgumentException("Invalid email address");
+            throw new IllegalArgumentException(
+                    "Invalid email address"
+            );
         }
 
         // Validate password
@@ -153,7 +174,8 @@ public class UserService {
         }
 
         // Normalize role name
-        final String normalizedRoleName = roleName.toUpperCase(Locale.ROOT);
+        final String normalizedRoleName =
+                roleName.toUpperCase(Locale.ROOT);
 
         // Check duplicate username
         if (userRepository.existsByUsername(username)) {
@@ -192,6 +214,7 @@ public class UserService {
         return UserResponse.fromEntity(savedUser);
     }
 
+    // Normalize input strings
     private String normalize(String value) {
         if (value == null || value.isBlank()) {
             return null;

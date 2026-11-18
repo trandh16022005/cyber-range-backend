@@ -1,9 +1,16 @@
 import { NavLink, Outlet } from 'react-router'
-import { Activity, ClipboardList, LayoutDashboard, Users } from 'lucide-react'
+import {
+    Activity,
+    ClipboardList,
+    LayoutDashboard,
+    Users,
+    UsersRound,
+} from 'lucide-react'
 
 const navigation = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Users', path: '/users', icon: Users },
+    { name: 'Teams', path: '/teams', icon: UsersRound },
     { name: 'Exercises', path: '/exercises', icon: ClipboardList },
 ]
 
@@ -21,7 +28,6 @@ function DashboardLayout() {
                         <NavLink
                             key={path}
                             to={path}
-                            end={path === '/'}
                             className={({ isActive }) =>
                                 `flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition ${
                                     isActive
@@ -43,8 +49,12 @@ function DashboardLayout() {
 
             <div className="min-w-0 flex-1">
                 <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8">
-                    <h1 className="font-semibold text-slate-800">Management Console</h1>
-                    <span className="text-sm text-slate-500">Frontend Development</span>
+                    <h1 className="font-semibold text-slate-800">
+                        Management Console
+                    </h1>
+                    <span className="text-sm text-slate-500">
+                        Frontend Development
+                    </span>
                 </header>
 
                 <main className="p-8">

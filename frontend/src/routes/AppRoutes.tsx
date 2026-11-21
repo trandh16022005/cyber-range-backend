@@ -14,6 +14,8 @@ import LoginPage from '../features/auth/LoginPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import UserManagementPage from '../features/users/UserManagementPage'
 import TeamManagementPage from '../features/teams/TeamManagementPage'
+import ExerciseManagementPage from '../features/exercises/ExerciseManagementPage'
+import ExerciseDetailPage from '../features/exercises/ExerciseDetailPage'
 
 import ProtectedRoute from './ProtectedRoute'
 
@@ -43,6 +45,16 @@ function AppRoutes() {
                             <Route
                                 path="/teams"
                                 element={<TeamManagementPage />}
+                            />
+
+                            <Route
+                                path="/exercises"
+                                element={<ExerciseManagementPage />}
+                            />
+
+                            <Route
+                                path="/exercises/:id"
+                                element={<ExerciseDetailPage />}
                             />
                         </Route>
                     </Route>

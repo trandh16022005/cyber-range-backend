@@ -65,3 +65,24 @@ export interface ApiResponse<T> {
     data: T
     timestamp: string
 }
+
+export type ExerciseParticipantRole = 'RED' | 'BLUE' | 'WHITE'
+
+export interface ExerciseParticipant {
+    id: number
+    exerciseId: number
+    userId: number
+    username: string
+    fullName: string
+    email: string
+    teamId: number | null
+    teamName: string | null
+    role: ExerciseParticipantRole
+    joinedAt: string
+}
+
+export interface AddExerciseParticipantRequest {
+    userId: number
+    teamId?: number
+    role: ExerciseParticipantRole
+}

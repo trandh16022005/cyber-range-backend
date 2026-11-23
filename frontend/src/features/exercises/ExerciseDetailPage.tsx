@@ -1,10 +1,16 @@
-
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { ArrowLeft, Calendar, ClipboardList, Server } from 'lucide-react'
+import {
+    ArrowLeft,
+    Calendar,
+    ClipboardList,
+    Server,
+} from 'lucide-react'
 
 import { getExerciseById } from './exerciseService'
 import type { Exercise } from './exercise.types'
+
+import ParticipantList from './components/ParticipantList'
 
 const statusStyles: Record<string, string> = {
     CREATED: 'bg-slate-100 text-slate-700',
@@ -171,14 +177,18 @@ function ExerciseDetailPage() {
 
                     <dl className="space-y-3 text-sm">
                         <div>
-                            <dt className="text-slate-500">Cyber Range ID</dt>
+                            <dt className="text-slate-500">
+                                Cyber Range ID
+                            </dt>
                             <dd className="mt-1 font-medium text-slate-900">
                                 #{exercise.cyberRangeId}
                             </dd>
                         </div>
 
                         <div>
-                            <dt className="text-slate-500">Cyber Range Name</dt>
+                            <dt className="text-slate-500">
+                                Cyber Range Name
+                            </dt>
                             <dd className="mt-1 font-medium text-slate-900">
                                 {exercise.cyberRangeName}
                             </dd>
@@ -197,28 +207,36 @@ function ExerciseDetailPage() {
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
-                            <p className="text-xs text-slate-500">Created At</p>
+                            <p className="text-xs text-slate-500">
+                                Created At
+                            </p>
                             <p className="mt-1 text-sm font-medium text-slate-900">
                                 {formatDate(exercise.createdAt)}
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-xs text-slate-500">Started At</p>
+                            <p className="text-xs text-slate-500">
+                                Started At
+                            </p>
                             <p className="mt-1 text-sm font-medium text-slate-900">
                                 {formatDate(exercise.startedAt)}
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-xs text-slate-500">Ended At</p>
+                            <p className="text-xs text-slate-500">
+                                Ended At
+                            </p>
                             <p className="mt-1 text-sm font-medium text-slate-900">
                                 {formatDate(exercise.endedAt)}
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-xs text-slate-500">Created By</p>
+                            <p className="text-xs text-slate-500">
+                                Created By
+                            </p>
                             <p className="mt-1 text-sm font-medium text-slate-900">
                                 {exercise.createdBy
                                     ? `User #${exercise.createdBy}`
@@ -228,6 +246,9 @@ function ExerciseDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Participant Management */}
+            <ParticipantList exerciseId={exercise.id} />
         </div>
     )
 }

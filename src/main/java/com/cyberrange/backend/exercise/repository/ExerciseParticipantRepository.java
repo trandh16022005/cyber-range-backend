@@ -46,4 +46,10 @@ public interface ExerciseParticipantRepository
             Long exerciseId,
             Long userId
     );
+
+    boolean existsByExercise_IdAndTeam_IdAndRole(
+            Long exerciseId,
+            Long teamId,
+            String role
+    );
 }

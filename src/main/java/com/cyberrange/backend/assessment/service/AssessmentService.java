@@ -300,6 +300,30 @@ public class AssessmentService {
     }
 
     /**
+     * Start a defensive task assessment.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed to perform this operation.
+     */
+    @Transactional
+    public AssessmentResultResponse startTask(Long resultId) {
+
+        validateId(resultId, "Assessment Result ID");
+
+        AssessmentResult result = resultRepository.findById(resultId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Assessment result not found with ID: " + resultId
+                ));
+
+        // Only PENDING tasks can be started.
+        // The entity method records startedAt using server time.
+        result.start();
+
+        AssessmentResult savedResult = resultRepository.save(result);
+
+        return toAssessmentResultResponse(savedResult);
+    }
+
+    /**
      * Convert Assessment entity to response DTO.
      */
     private AssessmentResponse toAssessmentResponse(

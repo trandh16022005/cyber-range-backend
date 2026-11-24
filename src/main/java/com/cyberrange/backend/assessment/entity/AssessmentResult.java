@@ -1,5 +1,6 @@
 package com.cyberrange.backend.assessment.entity;
 
+import com.cyberrange.backend.common.exception.BusinessException;
 import com.cyberrange.backend.scenario.entity.DefensiveTask;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -130,13 +131,13 @@ public class AssessmentResult {
 
     public void start() {
         if (startedAt != null) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Task has already been started"
             );
         }
 
         if (!"PENDING".equals(status)) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Only PENDING tasks can be started"
             );
         }

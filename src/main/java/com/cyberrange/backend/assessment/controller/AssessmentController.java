@@ -55,6 +55,28 @@ public class AssessmentController {
     }
 
     /**
+     * Start a defensive task assessment.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @PostMapping("/api/v1/assessment-results/{resultId}/start")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<AssessmentResultResponse>> startTask(
+            @PathVariable Long resultId
+    ) {
+
+        AssessmentResultResponse result =
+                assessmentService.startTask(resultId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assessment task started successfully",
+                        result
+                )
+        );
+    }
+
+    /**
      * Retrieve assessments belonging to an exercise.
      *
      * ADMIN and INSTRUCTOR can view all.

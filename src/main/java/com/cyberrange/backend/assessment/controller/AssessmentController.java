@@ -77,6 +77,52 @@ public class AssessmentController {
     }
 
     /**
+     * Record detection of a defensive task.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @PostMapping("/api/v1/assessment-results/{resultId}/detection")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<AssessmentResultResponse>>
+    recordDetection(
+            @PathVariable Long resultId
+    ) {
+
+        AssessmentResultResponse result =
+                assessmentService.recordDetection(resultId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assessment detection recorded successfully",
+                        result
+                )
+        );
+    }
+
+    /**
+     * Record response to a defensive task.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @PostMapping("/api/v1/assessment-results/{resultId}/response")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<AssessmentResultResponse>>
+    recordResponse(
+            @PathVariable Long resultId
+    ) {
+
+        AssessmentResultResponse result =
+                assessmentService.recordResponse(resultId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assessment response recorded successfully",
+                        result
+                )
+        );
+    }
+
+    /**
      * Retrieve assessments belonging to an exercise.
      *
      * ADMIN and INSTRUCTOR can view all.

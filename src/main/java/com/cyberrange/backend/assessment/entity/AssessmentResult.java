@@ -148,7 +148,7 @@ public class AssessmentResult {
 
     public void recordDetection(Instant detectedAt) {
         if (startedAt == null) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Task must be started before detection"
             );
         }
@@ -160,13 +160,13 @@ public class AssessmentResult {
         }
 
         if (this.detectedAt != null) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Detection has already been recorded"
             );
         }
 
         if (!"IN_PROGRESS".equals(status)) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Task must be IN_PROGRESS to record detection"
             );
         }
@@ -180,7 +180,7 @@ public class AssessmentResult {
 
     public void recordResponse(Instant respondedAt) {
         if (detectedAt == null) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Detection must be recorded before response"
             );
         }
@@ -192,13 +192,13 @@ public class AssessmentResult {
         }
 
         if (this.respondedAt != null) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Response has already been recorded"
             );
         }
 
         if (!"IN_PROGRESS".equals(status)) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Task must be IN_PROGRESS to record response"
             );
         }
@@ -209,6 +209,7 @@ public class AssessmentResult {
                 respondedAt
         );
     }
+
 
     public void complete(Instant completedAt, String reason) {
         if (startedAt == null) {

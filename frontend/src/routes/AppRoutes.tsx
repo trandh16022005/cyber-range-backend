@@ -9,12 +9,15 @@ import { AuthProvider } from '../features/auth/AuthContext'
 
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
+
 import LoginPage from '../features/auth/LoginPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import UserManagementPage from '../features/users/UserManagementPage'
 import TeamManagementPage from '../features/teams/TeamManagementPage'
 import ExerciseManagementPage from '../features/exercises/ExerciseManagementPage'
 import ExerciseDetailPage from '../features/exercises/ExerciseDetailPage'
+import AssessmentManagementPage from '../features/assessments/AssessmentManagementPage'
+import AssessmentDetailPage from '../features/assessments/AssessmentDetailPage'
 
 import ProtectedRoute from './ProtectedRoute'
 
@@ -25,7 +28,10 @@ function AppRoutes() {
                 <Routes>
                     {/* Public routes */}
                     <Route element={<AuthLayout />}>
-                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                            path="/login"
+                            element={<LoginPage />}
+                        />
                     </Route>
 
                     {/* Routes requiring authentication */}
@@ -55,6 +61,17 @@ function AppRoutes() {
                                 path="/exercises/:id"
                                 element={<ExerciseDetailPage />}
                             />
+
+                            {/* Assessment routes */}
+                            <Route
+                                path="/assessments"
+                                element={<AssessmentManagementPage />}
+                            />
+
+                            <Route
+                                path="/assessments/:id"
+                                element={<AssessmentDetailPage />}
+                            />
                         </Route>
                     </Route>
 
@@ -65,7 +82,10 @@ function AppRoutes() {
                     />
 
                     {/* Fallback route */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route
+                        path="*"
+                        element={<Navigate to="/" replace />}
+                    />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

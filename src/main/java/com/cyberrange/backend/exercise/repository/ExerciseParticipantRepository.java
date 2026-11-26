@@ -40,6 +40,17 @@ public interface ExerciseParticipantRepository
             String role
     );
 
+    @EntityGraph(attributePaths = {
+            "exercise",
+            "exercise.scenario",
+            "team"
+    })
+    List<ExerciseParticipant>
+    findByUser_IdAndRoleOrderByJoinedAtDesc(
+            Long userId,
+            String role
+    );
+
     long countByExercise_Id(Long exerciseId);
 
     void deleteByExercise_IdAndUser_Id(

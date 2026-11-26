@@ -22,6 +22,14 @@ public interface AssessmentRepository
             "exercise",
             "team"
     })
+    List<Assessment> findByExercise_IdInOrderByCreatedAtDesc(
+            List<Long> exerciseIds
+    );
+
+    @EntityGraph(attributePaths = {
+            "exercise",
+            "team"
+    })
     Optional<Assessment> findByExercise_IdAndTeam_Id(
             Long exerciseId,
             Long teamId

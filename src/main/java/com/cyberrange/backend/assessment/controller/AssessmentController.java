@@ -2,6 +2,7 @@ package com.cyberrange.backend.assessment.controller;
 
 import com.cyberrange.backend.assessment.dto.AssessmentResponse;
 import com.cyberrange.backend.assessment.dto.AssessmentResultResponse;
+import com.cyberrange.backend.assessment.dto.CompleteAssessmentResultRequest;
 import com.cyberrange.backend.assessment.service.AssessmentService;
 import com.cyberrange.backend.common.response.ApiResponse;
 
@@ -123,6 +124,39 @@ public class AssessmentController {
     }
 
     /**
+     * Complete a defensive task assessment.
+     *
+     * Detection is required, but Response is optional.
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @PostMapping(
+            "/api/v1/assessment-results/{resultId}/complete"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<AssessmentResultResponse>>
+    completeTask(
+            @PathVariable Long resultId,
+            @org.springframework.web.bind.annotation.RequestBody(
+                    required = false
+            ) CompleteAssessmentResultRequest request
+    ) {
+
+        String reason = request == null
+                ? null
+                : request.reason();
+
+        AssessmentResultResponse result =
+                assessmentService.completeTask(resultId, reason);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assessment task completed successfully",
+                        result
+                )
+        );
+    }
+
+    /**
      * Retrieve assessments belonging to an exercise.
      *
      * ADMIN and INSTRUCTOR can view all.
@@ -209,6 +243,33 @@ public class AssessmentController {
                 ApiResponse.success(
                         "Assessment results retrieved successfully",
                         results
+                )
+        );
+    }
+
+    /**
+     * Retrieve all assessments belonging to exercises
+     * where the current STUDENT is assigned as WHITE.
+     *
+     * Only STUDENT is allowed.
+     */
+    @GetMapping("/api/v1/assessments/my")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<List<AssessmentResponse>>>
+    getMyAssessments(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+
+        List<AssessmentResponse> assessments =
+                assessmentService.getMyAssessments(
+                        jwt.getSubject(),
+                        jwt.getClaimAsString("role")
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "My assessments retrieved successfully",
+                        assessments
                 )
         );
     }

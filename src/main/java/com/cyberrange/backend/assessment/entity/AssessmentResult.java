@@ -213,13 +213,19 @@ public class AssessmentResult {
 
     public void complete(Instant completedAt, String reason) {
         if (startedAt == null) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Task must be started before completion"
             );
         }
 
+        if (detectedAt == null) {
+            throw new BusinessException(
+                    "Detection must be recorded before completion"
+            );
+        }
+
         if (!"IN_PROGRESS".equals(status)) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Only IN_PROGRESS tasks can be completed"
             );
         }
@@ -232,9 +238,7 @@ public class AssessmentResult {
 
         Instant latestEvent = respondedAt != null
                 ? respondedAt
-                : detectedAt != null
-                ? detectedAt
-                : startedAt;
+                : detectedAt;
 
         if (completedAt.isBefore(latestEvent)) {
             throw new IllegalArgumentException(
@@ -246,6 +250,7 @@ public class AssessmentResult {
         this.completedAt = completedAt;
         this.reason = reason;
     }
+
 
     public void fail(String reason) {
         if (!"IN_PROGRESS".equals(status)) {

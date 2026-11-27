@@ -19,6 +19,14 @@ public interface AssessmentResultRepository
             Long assessmentId
     );
 
+    @EntityGraph(attributePaths = {
+            "assessment",
+            "assessment.exercise",
+            "assessment.team",
+            "defensiveTask"
+    })
+    Optional<AssessmentResult> findWithAssessmentDetailsById(Long id);
+
     Optional<AssessmentResult>
     findByAssessment_IdAndDefensiveTask_Id(
             Long assessmentId,

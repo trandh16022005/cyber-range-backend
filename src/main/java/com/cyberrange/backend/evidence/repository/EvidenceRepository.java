@@ -15,4 +15,9 @@ public interface EvidenceRepository extends JpaRepository<Evidence, Long> {
             Long exerciseId,
             String evidenceType
     );
+
+    List<Evidence> findByExercise_IdAndVerificationStatusOrderByCreatedAtDesc(
+            Long exerciseId,
+            String verificationStatus
+    );
 }

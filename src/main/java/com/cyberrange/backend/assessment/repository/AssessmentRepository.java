@@ -35,6 +35,12 @@ public interface AssessmentRepository
             Long teamId
     );
 
+    @EntityGraph(attributePaths = {
+            "exercise",
+            "team"
+    })
+    Optional<Assessment> findWithExerciseAndTeamById(Long id);
+
     boolean existsByExercise_IdAndTeam_Id(
             Long exerciseId,
             Long teamId

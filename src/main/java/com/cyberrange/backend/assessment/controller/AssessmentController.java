@@ -2,7 +2,11 @@ package com.cyberrange.backend.assessment.controller;
 
 import com.cyberrange.backend.assessment.dto.AssessmentResponse;
 import com.cyberrange.backend.assessment.dto.AssessmentResultResponse;
+import com.cyberrange.backend.assessment.dto.AssessmentScoreEvidenceResponse;
 import com.cyberrange.backend.assessment.dto.CompleteAssessmentResultRequest;
+import com.cyberrange.backend.assessment.dto.LinkEvidenceRequest;
+import com.cyberrange.backend.assessment.entity.AssessmentScoreEvidence;
+import com.cyberrange.backend.assessment.service.AssessmentScoreEvidenceService;
 import com.cyberrange.backend.assessment.service.AssessmentService;
 import com.cyberrange.backend.common.response.ApiResponse;
 
@@ -14,7 +18,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,11 +27,14 @@ import java.util.List;
 public class AssessmentController {
 
     private final AssessmentService assessmentService;
+    private final AssessmentScoreEvidenceService scoreEvidenceService;
 
     public AssessmentController(
-            AssessmentService assessmentService
+            AssessmentService assessmentService,
+            AssessmentScoreEvidenceService scoreEvidenceService
     ) {
         this.assessmentService = assessmentService;
+        this.scoreEvidenceService = scoreEvidenceService;
     }
 
     /**
@@ -136,9 +143,8 @@ public class AssessmentController {
     public ResponseEntity<ApiResponse<AssessmentResultResponse>>
     completeTask(
             @PathVariable Long resultId,
-            @org.springframework.web.bind.annotation.RequestBody(
-                    required = false
-            ) CompleteAssessmentResultRequest request
+            @RequestBody(required = false)
+            CompleteAssessmentResultRequest request
     ) {
 
         String reason = request == null
@@ -152,6 +158,66 @@ public class AssessmentController {
                 ApiResponse.success(
                         "Assessment task completed successfully",
                         result
+                )
+        );
+    }
+
+    /**
+     * Link verified Evidence to an Assessment Score.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @PostMapping(
+            "/api/v1/assessment-scores/{scoreId}/evidence"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<AssessmentScoreEvidenceResponse>>
+    linkEvidence(
+            @PathVariable Long scoreId,
+            @RequestBody LinkEvidenceRequest request
+    ) {
+
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Request body must not be null"
+            );
+        }
+
+        AssessmentScoreEvidence link =
+                scoreEvidenceService.linkEvidence(
+                        scoreId,
+                        request.evidenceId()
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Evidence linked to Assessment Score successfully",
+                        AssessmentScoreEvidenceResponse.fromEntity(link)
+                )
+        );
+    }
+
+    /**
+     * Retrieve Evidence linked to an Assessment Score.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @GetMapping(
+            "/api/v1/assessment-scores/{scoreId}/evidence"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<List<AssessmentScoreEvidenceResponse>>>
+    getEvidenceByScore(
+            @PathVariable Long scoreId
+    ) {
+
+        List<AssessmentScoreEvidenceResponse> evidence =
+                scoreEvidenceService.getEvidenceByScore(scoreId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assessment Score Evidence retrieved successfully",
+                        evidence
                 )
         );
     }

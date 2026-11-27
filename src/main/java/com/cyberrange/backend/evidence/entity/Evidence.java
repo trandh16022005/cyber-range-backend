@@ -1,7 +1,9 @@
 package com.cyberrange.backend.evidence.entity;
 
+import com.cyberrange.backend.common.exception.BusinessException;
 import com.cyberrange.backend.event.entity.Event;
 import com.cyberrange.backend.exercise.entity.Exercise;
+import com.cyberrange.backend.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -41,6 +43,19 @@ public class Evidence {
     @Column(name = "data", columnDefinition = "jsonb")
     private JsonNode data;
 
+    @Column(name = "verification_status", nullable = false, length = 20)
+    private String verificationStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "verified_by")
+    private User verifiedBy;
+
+    @Column(name = "verified_at")
+    private Instant verifiedAt;
+
+    @Column(name = "verification_comment")
+    private String verificationComment;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -58,12 +73,34 @@ public class Evidence {
         this.event = event;
         this.evidenceType = evidenceType;
         this.data = data;
+        this.verificationStatus = "PENDING";
+    }
+
+    public void verify(
+            String status,
+            User verifier,
+            String comment
+    ) {
+        if (!"PENDING".equals(this.verificationStatus)) {
+            throw new BusinessException(
+                    "Evidence has already been verified"
+            );
+        }
+
+        this.verificationStatus = status;
+        this.verifiedBy = verifier;
+        this.verifiedAt = Instant.now();
+        this.verificationComment = comment;
     }
 
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+
+        if (verificationStatus == null) {
+            verificationStatus = "PENDING";
         }
     }
 
@@ -85,6 +122,22 @@ public class Evidence {
 
     public JsonNode getData() {
         return data;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public User getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public String getVerificationComment() {
+        return verificationComment;
     }
 
     public Instant getCreatedAt() {

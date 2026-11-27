@@ -3,9 +3,12 @@ package com.cyberrange.backend.evidence.controller;
 import com.cyberrange.backend.common.response.ApiResponse;
 import com.cyberrange.backend.evidence.dto.CreateEvidenceRequest;
 import com.cyberrange.backend.evidence.dto.EvidenceResponse;
+import com.cyberrange.backend.evidence.dto.VerifyEvidenceRequest;
 import com.cyberrange.backend.evidence.service.EvidenceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -72,5 +75,25 @@ public class EvidenceController {
                 )
         );
     }
-}
 
+    @PatchMapping("/{id}/verification")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<EvidenceResponse>> verifyEvidence(
+            @PathVariable Long id,
+            @RequestBody VerifyEvidenceRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        EvidenceResponse evidence = evidenceService.verifyEvidence(
+                id,
+                jwt.getSubject(),
+                request
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Evidence verification completed successfully",
+                        evidence
+                )
+        );
+    }
+}

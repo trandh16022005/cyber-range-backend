@@ -4,15 +4,19 @@ import com.cyberrange.backend.event.entity.Event;
 import com.cyberrange.backend.event.repository.EventRepository;
 import com.cyberrange.backend.evidence.dto.CreateEvidenceRequest;
 import com.cyberrange.backend.evidence.dto.EvidenceResponse;
+import com.cyberrange.backend.evidence.dto.VerifyEvidenceRequest;
 import com.cyberrange.backend.evidence.entity.Evidence;
 import com.cyberrange.backend.evidence.repository.EvidenceRepository;
 import com.cyberrange.backend.exercise.entity.Exercise;
 import com.cyberrange.backend.exercise.repository.ExerciseRepository;
 import com.cyberrange.backend.common.exception.ResourceNotFoundException;
+import com.cyberrange.backend.user.entity.User;
+import com.cyberrange.backend.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @Transactional(readOnly = true)
@@ -21,15 +25,18 @@ public class EvidenceService {
     private final EvidenceRepository evidenceRepository;
     private final ExerciseRepository exerciseRepository;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
 
     public EvidenceService(
             EvidenceRepository evidenceRepository,
             ExerciseRepository exerciseRepository,
-            EventRepository eventRepository
+            EventRepository eventRepository,
+            UserRepository userRepository
     ) {
         this.evidenceRepository = evidenceRepository;
         this.exerciseRepository = exerciseRepository;
         this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
     }
 
     public List<EvidenceResponse> getEvidenceByExercise(Long exerciseId) {
@@ -97,6 +104,81 @@ public class EvidenceService {
                 evidenceType,
                 request.data()
         );
+
+        Evidence savedEvidence = evidenceRepository.save(evidence);
+
+        return EvidenceResponse.fromEntity(savedEvidence);
+    }
+
+    @Transactional
+    public EvidenceResponse verifyEvidence(
+            Long evidenceId,
+            String verifierId,
+            VerifyEvidenceRequest request
+    ) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Verification request must not be null"
+            );
+        }
+
+        validateRequiredText(verifierId, "Verifier ID", 100);
+
+        Evidence evidence = findEvidenceById(evidenceId);
+
+        String status = validateRequiredText(
+                request.verificationStatus(),
+                "Verification status",
+                20
+        ).toUpperCase(Locale.ROOT);
+
+        if (!status.equals("VERIFIED") && !status.equals("REJECTED")) {
+            throw new IllegalArgumentException(
+                    "Verification status must be VERIFIED or REJECTED"
+            );
+        }
+
+        String comment = request.verificationComment();
+
+        if (comment != null) {
+            comment = comment.trim();
+
+            if (comment.length() > 2000) {
+                throw new IllegalArgumentException(
+                        "Verification comment must not exceed 2000 characters"
+                );
+            }
+
+            if (comment.isBlank()) {
+                comment = null;
+            }
+        }
+
+        if ("REJECTED".equals(status)
+                && (comment == null || comment.isBlank())) {
+            throw new IllegalArgumentException(
+                    "Verification comment is required when rejecting Evidence"
+            );
+        }
+
+        Long userId;
+
+        try {
+            userId = Long.parseLong(verifierId);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(
+                    "Invalid verifier ID"
+            );
+        }
+
+        validateRequiredId(userId, "Verifier ID");
+
+        User verifier = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Verifier not found with ID: " + userId
+                ));
+
+        evidence.verify(status, verifier, comment);
 
         Evidence savedEvidence = evidenceRepository.save(evidence);
 

@@ -11,6 +11,10 @@ public record EvidenceResponse(
         Long eventId,
         String evidenceType,
         JsonNode data,
+        String verificationStatus,
+        Long verifiedById,
+        Instant verifiedAt,
+        String verificationComment,
         Instant createdAt
 ) {
 
@@ -23,6 +27,12 @@ public record EvidenceResponse(
                         : null,
                 evidence.getEvidenceType(),
                 evidence.getData(),
+                evidence.getVerificationStatus(),
+                evidence.getVerifiedBy() != null
+                        ? evidence.getVerifiedBy().getId()
+                        : null,
+                evidence.getVerifiedAt(),
+                evidence.getVerificationComment(),
                 evidence.getCreatedAt()
         );
     }

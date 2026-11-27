@@ -82,4 +82,20 @@ public class ManagedService {
     public String getStatus() {
         return status;
     }
+
+    public void updateDetails(
+            String name,
+            String serviceType,
+            Integer port,
+            String protocol
+    ) {
+        this.name = name;
+        this.serviceType = serviceType;
+        this.port = port;
+        this.protocol = protocol;
+    }
+
+    public void updateStatus(String status) {
+        this.status = status;
+    }
 }

@@ -14,4 +14,11 @@ public interface ManagedServiceRepository extends JpaRepository<ManagedService, 
             Integer port,
             String protocol
     );
+
+    boolean existsByAsset_IdAndPortAndProtocolAndIdNot(
+            Long assetId,
+            Integer port,
+            String protocol,
+            Long serviceId
+    );
 }

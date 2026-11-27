@@ -10,4 +10,10 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     List<Asset> findByCyberRange_IdOrderByNameAsc(Long cyberRangeId);
 
     boolean existsByCyberRange_IdAndIpAddress(Long cyberRangeId, String ipAddress);
+
+    boolean existsByCyberRange_IdAndIpAddressAndIdNot(
+            Long cyberRangeId,
+            String ipAddress,
+            Long assetId
+    );
 }

@@ -92,4 +92,22 @@ public class Asset {
     public String getStatus() {
         return status;
     }
+
+    public void updateDetails(
+            String name,
+            String assetType,
+            String hostname,
+            String ipAddress,
+            String os
+    ) {
+        this.name = name;
+        this.assetType = assetType;
+        this.hostname = hostname;
+        this.ipAddress = ipAddress;
+        this.os = os;
+    }
+
+    public void updateStatus(String status) {
+        this.status = status;
+    }
 }

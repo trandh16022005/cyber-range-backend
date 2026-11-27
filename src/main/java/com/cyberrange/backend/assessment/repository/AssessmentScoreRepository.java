@@ -25,14 +25,16 @@ public interface AssessmentScoreRepository
     );
 
     /**
-     * Calculate total awarded score of applicable assessment results.
-     * NOT_APPLICABLE results are excluded.
+     * Calculate total awarded score of evaluated assessment results.
+     *
+     * Only COMPLETED and FAILED results are included.
+     * PENDING, IN_PROGRESS and NOT_APPLICABLE are excluded.
      */
     @Query("""
             SELECT COALESCE(SUM(s.awardedScore), 0)
             FROM AssessmentScore s
             WHERE s.assessmentResult.assessment.id = :assessmentId
-              AND s.assessmentResult.status <> 'NOT_APPLICABLE'
+              AND s.assessmentResult.status IN ('COMPLETED', 'FAILED')
             """)
     BigDecimal sumAwardedScoreByAssessmentId(
             @Param("assessmentId") Long assessmentId

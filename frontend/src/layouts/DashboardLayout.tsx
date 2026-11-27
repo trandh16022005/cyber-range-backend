@@ -5,6 +5,7 @@ import {
     LayoutDashboard,
     Users,
     UsersRound,
+    Workflow,
 } from 'lucide-react'
 
 import { useAuth } from '../features/auth/AuthContext'
@@ -35,6 +36,12 @@ function DashboardLayout() {
             name: 'Exercises',
             path: '/exercises',
             icon: ClipboardList,
+            roles: ['ADMIN', 'INSTRUCTOR'],
+        },
+        {
+            name: 'Lab Workflow',
+            path: '/lab-workflow',
+            icon: Workflow,
             roles: ['ADMIN', 'INSTRUCTOR'],
         },
         {

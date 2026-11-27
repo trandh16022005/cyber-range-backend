@@ -18,6 +18,7 @@ import ExerciseManagementPage from '../features/exercises/ExerciseManagementPage
 import ExerciseDetailPage from '../features/exercises/ExerciseDetailPage'
 import AssessmentManagementPage from '../features/assessments/AssessmentManagementPage'
 import AssessmentDetailPage from '../features/assessments/AssessmentDetailPage'
+import LabWorkflowPage from '../features/lab-workflow/LabWorkflowPage'
 
 import ProtectedRoute from './ProtectedRoute'
 
@@ -61,6 +62,20 @@ function AppRoutes() {
                                 path="/exercises/:id"
                                 element={<ExerciseDetailPage />}
                             />
+
+                            {/* Lab Workflow - ADMIN / INSTRUCTOR only */}
+                            <Route
+                                element={
+                                    <ProtectedRoute
+                                        allowedRoles={['ADMIN', 'INSTRUCTOR']}
+                                    />
+                                }
+                            >
+                                <Route
+                                    path="/lab-workflow"
+                                    element={<LabWorkflowPage />}
+                                />
+                            </Route>
 
                             {/* Assessment routes */}
                             <Route

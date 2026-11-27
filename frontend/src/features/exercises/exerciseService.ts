@@ -11,6 +11,11 @@ import type {
     ExerciseParticipant,
 } from './exercise.types'
 
+import type {
+    DefensiveTask,
+    LabScenario,
+} from '../lab-workflow/labWorkflow.types'
+
 export interface ExerciseQueryParams {
     page?: number
     size?: number
@@ -21,22 +26,21 @@ export interface ExerciseQueryParams {
 
 // Get paginated exercises
 export const getExercises = async (
-    params: ExerciseQueryParams = {}
+    params: ExerciseQueryParams = {},
 ): Promise<PageResponse<Exercise>> => {
-    const response = await api.get<ApiResponse<PageResponse<Exercise>>>(
-        '/exercises',
-        { params }
-    )
+    const response = await api.get<
+        ApiResponse<PageResponse<Exercise>>
+    >('/exercises', { params })
 
     return response.data.data
 }
 
 // Get exercise details
 export const getExerciseById = async (
-    id: number
+    id: number,
 ): Promise<Exercise> => {
     const response = await api.get<ApiResponse<Exercise>>(
-        `/exercises/${id}`
+        `/exercises/${id}`,
     )
 
     return response.data.data
@@ -44,11 +48,11 @@ export const getExerciseById = async (
 
 // Create exercise
 export const createExercise = async (
-    request: CreateExerciseRequest
+    request: CreateExerciseRequest,
 ): Promise<Exercise> => {
     const response = await api.post<ApiResponse<Exercise>>(
         '/exercises',
-        request
+        request,
     )
 
     return response.data.data
@@ -117,4 +121,26 @@ export const removeExerciseParticipant = async (
     await api.delete<ApiResponse<void>>(
         `/exercises/${exerciseId}/participants/${userId}`,
     )
+}
+
+// Get scenario details for Lab Workflow
+export const getLabScenario = async (
+    scenarioId: number,
+): Promise<LabScenario> => {
+    const response = await api.get<ApiResponse<LabScenario>>(
+        `/scenarios/${scenarioId}`,
+    )
+
+    return response.data.data
+}
+
+// Get defensive tasks of a scenario for Lab Workflow
+export const getScenarioDefensiveTasks = async (
+    scenarioId: number,
+): Promise<DefensiveTask[]> => {
+    const response = await api.get<
+        ApiResponse<DefensiveTask[]>
+    >(`/scenarios/${scenarioId}/defensive-tasks`)
+
+    return response.data.data
 }

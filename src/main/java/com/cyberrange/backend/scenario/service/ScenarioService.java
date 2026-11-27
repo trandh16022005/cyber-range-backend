@@ -4,9 +4,12 @@ import com.cyberrange.backend.common.exception.BusinessException;
 import com.cyberrange.backend.common.exception.ResourceNotFoundException;
 import com.cyberrange.backend.common.response.PageResponse;
 import com.cyberrange.backend.scenario.dto.CreateScenarioRequest;
+import com.cyberrange.backend.scenario.dto.DefensiveTaskResponse;
 import com.cyberrange.backend.scenario.dto.ScenarioResponse;
 import com.cyberrange.backend.scenario.dto.UpdateScenarioRequest;
+import com.cyberrange.backend.scenario.entity.DefensiveTask;
 import com.cyberrange.backend.scenario.entity.Scenario;
+import com.cyberrange.backend.scenario.repository.DefensiveTaskRepository;
 import com.cyberrange.backend.scenario.repository.ScenarioRepository;
 import com.cyberrange.backend.user.entity.User;
 import com.cyberrange.backend.user.repository.UserRepository;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -32,13 +36,16 @@ public class ScenarioService {
 
     private final ScenarioRepository scenarioRepository;
     private final UserRepository userRepository;
+    private final DefensiveTaskRepository defensiveTaskRepository;
 
     public ScenarioService(
             ScenarioRepository scenarioRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            DefensiveTaskRepository defensiveTaskRepository
     ) {
         this.scenarioRepository = scenarioRepository;
         this.userRepository = userRepository;
+        this.defensiveTaskRepository = defensiveTaskRepository;
     }
 
     // 1. Get scenarios with pagination and filtering
@@ -94,7 +101,24 @@ public class ScenarioService {
         return ScenarioResponse.fromEntity(scenario);
     }
 
-    // 3. Create scenario
+    // 3. Get defensive tasks of a scenario
+    public List<DefensiveTaskResponse> getDefensiveTasks(
+            Long scenarioId
+    ) {
+        findScenarioById(scenarioId);
+
+        List<DefensiveTask> tasks =
+                defensiveTaskRepository
+                        .findByScenario_IdOrderBySequenceOrderAsc(
+                                scenarioId
+                        );
+
+        return tasks.stream()
+                .map(DefensiveTaskResponse::fromEntity)
+                .toList();
+    }
+
+    // 4. Create scenario
     @Transactional
     public ScenarioResponse createScenario(
             CreateScenarioRequest request,
@@ -145,7 +169,7 @@ public class ScenarioService {
         return ScenarioResponse.fromEntity(savedScenario);
     }
 
-    // 4. Update scenario (DRAFT only)
+    // 5. Update scenario (DRAFT only)
     @Transactional
     public ScenarioResponse updateScenario(
             Long id,
@@ -214,7 +238,7 @@ public class ScenarioService {
         return ScenarioResponse.fromEntity(scenario);
     }
 
-    // 5. Publish scenario (DRAFT -> PUBLISHED)
+    // 6. Publish scenario (DRAFT -> PUBLISHED)
     @Transactional
     public ScenarioResponse publishScenario(Long id) {
         Scenario scenario = findScenarioById(id);
@@ -230,7 +254,7 @@ public class ScenarioService {
         return ScenarioResponse.fromEntity(scenario);
     }
 
-    // 6. Archive scenario (DRAFT/PUBLISHED -> ARCHIVED)
+    // 7. Archive scenario (DRAFT/PUBLISHED -> ARCHIVED)
     @Transactional
     public ScenarioResponse archiveScenario(Long id) {
         Scenario scenario = findScenarioById(id);
@@ -247,7 +271,7 @@ public class ScenarioService {
         return ScenarioResponse.fromEntity(scenario);
     }
 
-    // 7. Delete scenario (ADMIN only - permission handled by Controller)
+    // 8. Delete scenario (ADMIN only - permission handled by Controller)
     @Transactional
     public void deleteScenario(Long id) {
         Scenario scenario = findScenarioById(id);

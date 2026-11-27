@@ -1,0 +1,17 @@
+services:
+  ubuntu-target:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cyber-range-ubuntu-target:24.04
+    container_name: cyber-range-ubuntu-target
+    hostname: ubuntu-target
+    restart: unless-stopped
+    networks:
+      - cyber-range-network
+
+networks:
+  cyber-range-network:
+    name: cyber-range-network
+    driver: bridge
+    internal: true

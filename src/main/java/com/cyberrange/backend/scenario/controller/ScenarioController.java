@@ -3,6 +3,7 @@ package com.cyberrange.backend.scenario.controller;
 import com.cyberrange.backend.common.response.ApiResponse;
 import com.cyberrange.backend.common.response.PageResponse;
 import com.cyberrange.backend.scenario.dto.CreateScenarioRequest;
+import com.cyberrange.backend.scenario.dto.DefensiveTaskResponse;
 import com.cyberrange.backend.scenario.dto.ScenarioResponse;
 import com.cyberrange.backend.scenario.dto.UpdateScenarioRequest;
 import com.cyberrange.backend.scenario.service.ScenarioService;
@@ -12,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/scenarios")
@@ -58,7 +61,23 @@ public class ScenarioController {
         );
     }
 
-    // 3. Create scenario
+    // 3. Get defensive tasks of a scenario
+    @GetMapping("/{id}/defensive-tasks")
+    public ResponseEntity<ApiResponse<List<DefensiveTaskResponse>>> getDefensiveTasks(
+            @PathVariable Long id
+    ) {
+        List<DefensiveTaskResponse> tasks =
+                scenarioService.getDefensiveTasks(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Defensive tasks retrieved successfully",
+                        tasks
+                )
+        );
+    }
+
+    // 4. Create scenario
     @PostMapping
     public ResponseEntity<ApiResponse<ScenarioResponse>> createScenario(
             @RequestBody CreateScenarioRequest request,
@@ -77,7 +96,7 @@ public class ScenarioController {
         );
     }
 
-    // 4. Update scenario
+    // 5. Update scenario
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<ScenarioResponse>> updateScenario(
             @PathVariable Long id,
@@ -94,7 +113,7 @@ public class ScenarioController {
         );
     }
 
-    // 5. Publish scenario
+    // 6. Publish scenario
     @PatchMapping("/{id}/publish")
     public ResponseEntity<ApiResponse<ScenarioResponse>> publishScenario(
             @PathVariable Long id
@@ -109,7 +128,7 @@ public class ScenarioController {
         );
     }
 
-    // 6. Archive scenario
+    // 7. Archive scenario
     @PatchMapping("/{id}/archive")
     public ResponseEntity<ApiResponse<ScenarioResponse>> archiveScenario(
             @PathVariable Long id
@@ -124,7 +143,7 @@ public class ScenarioController {
         );
     }
 
-    // 7. Delete scenario (ADMIN only)
+    // 8. Delete scenario (ADMIN only)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteScenario(

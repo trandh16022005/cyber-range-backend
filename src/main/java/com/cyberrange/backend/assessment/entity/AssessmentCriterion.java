@@ -10,8 +10,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Entity
 @Table(name = "assessment_criteria")
@@ -41,6 +44,10 @@ public class AssessmentCriterion {
             scale = 2
     )
     private BigDecimal maxScore;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "scoring_rule", columnDefinition = "jsonb")
+    private Map<String, Object> scoringRule;
 
     protected AssessmentCriterion() {
         // Required by JPA
@@ -82,5 +89,9 @@ public class AssessmentCriterion {
 
     public BigDecimal getMaxScore() {
         return maxScore;
+    }
+
+    public Map<String, Object> getScoringRule() {
+        return scoringRule;
     }
 }

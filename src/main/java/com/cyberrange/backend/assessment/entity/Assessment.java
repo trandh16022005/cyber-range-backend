@@ -151,6 +151,20 @@ public class Assessment {
         return createdAt;
     }
 
+    /**
+     * Update total score without changing assessment status.
+     */
+    public void updateTotalScore(BigDecimal totalScore) {
+        if (totalScore == null
+                || totalScore.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "Total score must be non-negative"
+            );
+        }
+
+        this.totalScore = totalScore;
+    }
+
     public void start() {
         this.status = "RUNNING";
 

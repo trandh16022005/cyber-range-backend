@@ -3,11 +3,13 @@ package com.cyberrange.backend.assessment.controller;
 import com.cyberrange.backend.assessment.dto.AssessmentResponse;
 import com.cyberrange.backend.assessment.dto.AssessmentResultResponse;
 import com.cyberrange.backend.assessment.dto.AssessmentScoreEvidenceResponse;
+import com.cyberrange.backend.assessment.dto.AutomatedScoringResponse;
 import com.cyberrange.backend.assessment.dto.CompleteAssessmentResultRequest;
 import com.cyberrange.backend.assessment.dto.LinkEvidenceRequest;
 import com.cyberrange.backend.assessment.entity.AssessmentScoreEvidence;
 import com.cyberrange.backend.assessment.service.AssessmentScoreEvidenceService;
 import com.cyberrange.backend.assessment.service.AssessmentService;
+import com.cyberrange.backend.assessment.service.AutomatedScoringService;
 import com.cyberrange.backend.common.response.ApiResponse;
 
 import org.springframework.http.ResponseEntity;
@@ -28,13 +30,16 @@ public class AssessmentController {
 
     private final AssessmentService assessmentService;
     private final AssessmentScoreEvidenceService scoreEvidenceService;
+    private final AutomatedScoringService automatedScoringService;
 
     public AssessmentController(
             AssessmentService assessmentService,
-            AssessmentScoreEvidenceService scoreEvidenceService
+            AssessmentScoreEvidenceService scoreEvidenceService,
+            AutomatedScoringService automatedScoringService
     ) {
         this.assessmentService = assessmentService;
         this.scoreEvidenceService = scoreEvidenceService;
+        this.automatedScoringService = automatedScoringService;
     }
 
     /**
@@ -58,6 +63,31 @@ public class AssessmentController {
                 ApiResponse.success(
                         "Assessments initialized successfully",
                         assessments
+                )
+        );
+    }
+
+    /**
+     * Automatically evaluate an assessment using verified Evidence.
+     *
+     * Only ADMIN and INSTRUCTOR are allowed.
+     */
+    @PostMapping(
+            "/api/v1/assessments/{assessmentId}/auto-score"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<AutomatedScoringResponse>>
+    autoScoreAssessment(
+            @PathVariable Long assessmentId
+    ) {
+
+        AutomatedScoringResponse result =
+                automatedScoringService.evaluate(assessmentId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assessment automatically scored successfully",
+                        result
                 )
         );
     }

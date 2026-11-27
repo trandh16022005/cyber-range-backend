@@ -9,6 +9,7 @@ public record AssessmentScoreResponse(
         String criterionType,
         BigDecimal awardedScore,
         BigDecimal maxScore,
-        String reason
+        String reason,
+        String scoreSource
 ) {
 }

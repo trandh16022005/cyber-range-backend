@@ -532,7 +532,8 @@ public class AssessmentService {
                 criterion.getCriterionType(),
                 score.getAwardedScore(),
                 score.getMaxScore(),
-                score.getReason()
+                score.getReason(),
+                score.getScoreSource()
         );
     }
 

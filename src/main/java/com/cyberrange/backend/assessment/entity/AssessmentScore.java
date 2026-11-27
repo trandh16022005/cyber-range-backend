@@ -59,6 +59,13 @@ public class AssessmentScore {
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
+    @Column(
+            name = "score_source",
+            nullable = false,
+            length = 20
+    )
+    private String scoreSource = "UNASSESSED";
+
     protected AssessmentScore() {
         // Required by JPA
     }
@@ -75,6 +82,7 @@ public class AssessmentScore {
         this.awardedScore = awardedScore;
         this.maxScore = maxScore;
         this.reason = reason;
+        this.scoreSource = "UNASSESSED";
     }
 
     public Long getId() {
@@ -101,12 +109,53 @@ public class AssessmentScore {
         return reason;
     }
 
+    public String getScoreSource() {
+        return scoreSource;
+    }
+
+    /**
+     * Update score manually.
+     */
     public void updateScore(
             BigDecimal awardedScore,
             String reason
     ) {
+        if (awardedScore == null
+                || awardedScore.compareTo(BigDecimal.ZERO) < 0
+                || awardedScore.compareTo(this.maxScore) > 0) {
+            throw new IllegalArgumentException(
+                    "Score must be between 0 and max score"
+            );
+        }
+
         this.awardedScore = awardedScore;
         this.reason = reason;
+        this.scoreSource = "MANUAL";
+    }
+
+    /**
+     * Update score automatically using the Rule Engine.
+     *
+     * MANUAL scores are never overwritten.
+     */
+    public void updateAutomatedScore(
+            BigDecimal awardedScore,
+            String reason
+    ) {
+        if ("MANUAL".equals(this.scoreSource)) {
+            return;
+        }
+
+        if (awardedScore == null
+                || awardedScore.compareTo(BigDecimal.ZERO) < 0
+                || awardedScore.compareTo(this.maxScore) > 0) {
+            throw new IllegalArgumentException(
+                    "Automated score must be between 0 and max score"
+            );
+        }
+
+        this.awardedScore = awardedScore;
+        this.reason = reason;
+        this.scoreSource = "AUTOMATED";
     }
 }
-

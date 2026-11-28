@@ -1,5 +1,12 @@
 # Tiến độ triển khai Cyber Range
 
+## Exercise Lifecycle và duyệt lượt SSH
+
+- Trang chi tiết Exercise có nút vòng đời cho ADMIN và INSTRUCTOR. Frontend đọc thao tác từ Backend, theo dõi yêu cầu dừng Lab và cập nhật Exercise sau khi Runner xác nhận. Lab Workflow giữ khả năng chọn Exercise đang chạy, tạm dừng và đã kết thúc để xem lại.
+- API kiểm tra điều kiện duyệt cho đội RED và phiên hiện tại trước khi bật nút. Giao dịch duyệt kiểm tra lại điều kiện và từ chối nếu mã phiên đã thay đổi. API thao tác của học viên kiểm tra trạng thái Exercise trong giao dịch ghi.
+- Maven đạt 8/8 trên PostgreSQL cô lập. TypeScript và Vite build đạt. Sau khi PostgreSQL chính hoạt động trở lại, truy vấn chỉ đọc xác nhận SQLState `42P01` vì thiếu `public.ssh_practice_runs`, đồng thời xác nhận thiếu bảng lịch sử và index của migration 003.
+- Đã phục hồi bản sao lưu mới `cyber_range_db-before-practice-20261128114307.dump` trên cụm riêng và chạy lặp thành công migration 002/003. Số Exercise, Assessment, Event và Evidence giữ nguyên. Nghiệm thu trình duyệt chính và migration chính đang chờ xác nhận.
+
 ## Khởi động sản phẩm Windows từ Spring Boot
 
 - Backend chính kiểm tra cấu hình, sinh Service Token trong bộ nhớ và đưa Runner cùng Vite vào Windows Job Object. Hibernate xác minh `cyber_range_db/public`. Khi nhận tín hiệu dừng mềm, Backend yêu cầu Runner dừng phiên qua workflow hiện có trước khi đóng các tiến trình con.

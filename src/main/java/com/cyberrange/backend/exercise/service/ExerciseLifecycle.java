@@ -60,6 +60,19 @@ public class ExerciseLifecycle {
     }
 
     @Transactional
+    public void lockLabChanges() {
+        labRepository.lockLifecycle();
+    }
+
+    @Transactional
+    public void requireStudentPractice(long id) {
+        var exercise = exercises.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
+        if (!exercise.allowsStudentPractice()) {
+            throw new BusinessException("Exercise đang tạm dừng hoặc đã kết thúc. Bạn vẫn có thể xem kết quả.");
+        }
+    }
+
+    @Transactional
     public View change(long id, Action action, String expectedStatus, boolean environmentConfirmed) {
         validateId(id);
         if (action == null || expectedStatus == null || !legalActions(expectedStatus).contains(action)) {

@@ -1,5 +1,7 @@
 package com.cyberrange.backend.event.service;
 
+import com.cyberrange.backend.exercise.service.ExerciseLifecycle;
+
 import com.cyberrange.backend.assessment.repository.AssessmentRepository;
 import com.cyberrange.backend.assessment.service.BlueSshAccess;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,9 +39,11 @@ public class SshResponseWorkflow {
     private final EventService events;
     private final UserRepository users;
     private final BlueSshAccess blueAccess;
+    private final ExerciseLifecycle lifecycle;
 
     public SshResponseWorkflow(SshAlertRepository alerts, SshLabRepository labs, AssessmentRepository assessments,
-                               IncidentReportRepository reports, EventService events, UserRepository users, BlueSshAccess blueAccess) {
+                               IncidentReportRepository reports, EventService events, UserRepository users, BlueSshAccess blueAccess,
+                               ExerciseLifecycle lifecycle) {
         this.alerts = alerts;
         this.labs = labs;
         this.assessments = assessments;
@@ -47,6 +51,7 @@ public class SshResponseWorkflow {
         this.events = events;
         this.users = users;
         this.blueAccess = blueAccess;
+        this.lifecycle = lifecycle;
     }
 
     public List<Alert> list(long exercise, String status) {
@@ -91,6 +96,7 @@ public class SshResponseWorkflow {
                 throw new AccessDeniedException("Action is reserved for instructors");
             }
             requireStudentAlert(alert, actor);
+            lifecycle.requireStudentPractice(exercise);
         }
         var history = alerts.history(id);
         switch (command.action()) {

@@ -74,7 +74,7 @@ public class ExerciseController {
                 lifecycle.change(id, ExerciseLifecycle.Action.PREPARE, "CREATED", false).exercise());
     }
 
-    public record LifecycleRequest(ExerciseLifecycle.Action action, String expectedStatus, boolean environmentConfirmed) {}
+    public record LifecycleRequest(ExerciseLifecycle.Action action, String expectedStatus, Boolean environmentConfirmed) {}
 
     @GetMapping("/{id}/lifecycle")
     public ApiResponse<ExerciseLifecycle.View> lifecycle(@PathVariable long id) {
@@ -83,7 +83,7 @@ public class ExerciseController {
 
     @PostMapping("/{id}/lifecycle")
     public ResponseEntity<ApiResponse<ExerciseLifecycle.View>> changeLifecycle(@PathVariable long id, @RequestBody LifecycleRequest request) {
-        var result = lifecycle.change(id, request.action(), request.expectedStatus(), request.environmentConfirmed());
+        var result = lifecycle.change(id, request.action(), request.expectedStatus(), Boolean.TRUE.equals(request.environmentConfirmed()));
         if (result.awaitingLabStop()) {
             return ResponseEntity.accepted().body(ApiResponse.success("Đang chờ Runner xác nhận dừng Lab", result));
         }

@@ -91,15 +91,16 @@ const stages: Record<Practice['state'], string> = {
     REVIEWED: 'Đã duyệt điểm',
 }
 
-function message(error: unknown) {
+function message(error: unknown, instructor = false) {
     if (isAxiosError<ApiResponse<unknown>>(error)) {
         if (error.response?.status === 404) return 'Tính năng thực hành có hướng dẫn chưa được bật trên Backend.'
+        if (error.response?.status === 503 && instructor) return 'Schema bài thực hành SSH chưa sẵn sàng. Quản trị viên cần kiểm tra migration 002 và 003.'
         return error.response?.data?.message ?? 'Không thể kết nối Backend.'
     }
     return 'Không thể thực hiện thao tác.'
 }
 
-function usePractice(path: string) {
+function usePractice(path: string, instructor = false) {
     const [runs, setRuns] = useState<Practice[] | null>(null)
     const [error, setError] = useState<string | null>(null)
     useEffect(() => {
@@ -113,14 +114,14 @@ function usePractice(path: string) {
                     setError(null)
                 }
             } catch (cause) {
-                if (active) setError(message(cause))
+                if (active) setError(message(cause, instructor))
             } finally {
                 if (active) timer = setTimeout(() => void poll(), 4000)
             }
         }
         void poll()
         return () => { active = false; clearTimeout(timer) }
-    }, [path])
+    }, [path, instructor])
     const update = (run: Practice) => setRuns((current) => [run, ...(current ?? []).filter((item) => item.id !== run.id)])
     return { runs, error, update }
 }
@@ -138,13 +139,41 @@ export default function SshPracticePage() {
     )
 }
 
-export function SshPracticeInstructor({ assessment }: { assessment: Assessment }) {
+export function SshPracticeInstructor({ assessment, lab, reachable }: {
+    assessment: Assessment
+    lab: { id: string; assessmentId: number; ready: boolean; desiredRunning: boolean } | null
+    reachable: boolean
+}) {
     const path = `/assessments/${assessment.id}/ssh-practice`
-    const { runs, error, update } = usePractice(path)
+    const { runs, error, update } = usePractice(path, true)
     const [redTeam, setRedTeam] = useState('')
     const [teams, setTeams] = useState<Array<{ id: number; name: string }>>([])
     const [saving, setSaving] = useState(false)
     const [notice, setNotice] = useState<string | null>(null)
+    const [eligibility, setEligibility] = useState<{ key: string; reason: string | null } | null>(null)
+    const labBlocker = !reachable ? 'Chưa xác nhận kết nối Backend.'
+        : !lab ? 'Khởi động Lab cho Assessment này.'
+        : lab.assessmentId !== assessment.id ? 'Lab thuộc Assessment khác.'
+        : !lab.desiredRunning ? 'Phiên Lab đang dừng hoặc đã dừng.'
+        : !lab.ready ? 'Chờ các dịch vụ Lab đạt READY.'
+        : null
+    const eligibilityKey = !labBlocker && redTeam && lab ? `${path}:${lab.id}:${redTeam}` : null
+    const currentEligibility = eligibilityKey && eligibility?.key === eligibilityKey ? eligibility : null
+
+    useEffect(() => {
+        if (!eligibilityKey) return
+        const controller = new AbortController()
+        void api.get<ApiResponse<string>>(`${path}/approval`, {
+            params: { redTeamId: redTeam }, signal: controller.signal,
+        }).then(({ data }) => {
+            if (!controller.signal.aborted) {
+                setEligibility({ key: eligibilityKey, reason: data.data === lab?.id ? null : 'Phiên Lab đã thay đổi.' })
+            }
+        }).catch((cause: unknown) => {
+            if (!controller.signal.aborted) setEligibility({ key: eligibilityKey, reason: message(cause, true) })
+        })
+        return () => controller.abort()
+    }, [eligibilityKey, path, redTeam, lab?.id, runs])
 
     useEffect(() => {
         let active = true
@@ -163,13 +192,14 @@ export function SshPracticeInstructor({ assessment }: { assessment: Assessment }
     }, [assessment.exerciseId])
 
     const approve = async () => {
+        if (!lab || labBlocker || !currentEligibility || currentEligibility.reason || saving || !runs || error) return
         setSaving(true)
         setNotice(null)
         try {
-            const response = await api.post<ApiResponse<Practice>>(path, { redTeamId: Number(redTeam) })
+            const response = await api.post<ApiResponse<Practice>>(path, { redTeamId: Number(redTeam), labSessionId: lab.id })
             update(response.data.data)
         } catch (cause) {
-            setNotice(message(cause))
+            setNotice(message(cause, true))
         } finally {
             setSaving(false)
         }
@@ -187,8 +217,10 @@ export function SshPracticeInstructor({ assessment }: { assessment: Assessment }
                         {teams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}
                     </select>
                 </label>
-                <button type="button" className={button} disabled={saving || !redTeam || !runs}
+                <button type="button" className={button} disabled={saving || !!labBlocker || !runs || !!error || !currentEligibility || !!currentEligibility.reason}
                     onClick={() => void approve()}>Duyệt lượt cho phiên Lab hiện tại</button>
+                <p className="text-sm text-slate-600">{labBlocker ?? (!redTeam ? 'Chọn đội RED để kiểm tra điều kiện duyệt.' :
+                    currentEligibility?.reason ?? (!currentEligibility ? 'Đang kiểm tra điều kiện duyệt…' : 'Đủ điều kiện duyệt.'))}</p>
                 {(error || notice) && <p role="alert" className="text-red-700">{notice ?? error}</p>}
             </section>
             {runs?.map((run) => <PracticeCard key={run.id} run={run} update={update} />)}

@@ -21,7 +21,7 @@ function message(error: unknown) {
     return 'Không thể tải hoặc khởi tạo Assessment.'
 }
 
-export default function AssessmentSetup({ exerciseId }: { exerciseId: number }) {
+export default function AssessmentSetup({ exerciseId, readOnly }: { exerciseId: number; readOnly: boolean }) {
     const [teams, setTeams] = useState<Map<number, string>>(new Map())
     const [assessments, setAssessments] = useState<Assessment[]>([])
     const [teamId, setTeamId] = useState<number | null>(null)
@@ -99,7 +99,7 @@ export default function AssessmentSetup({ exerciseId }: { exerciseId: number }) 
                     ) : (
                         <button
                             type="button"
-                            disabled={teamId === null || saving || missingCriteria !== 0}
+                            disabled={readOnly || teamId === null || saving || missingCriteria !== 0}
                             onClick={() => void initialize()}
                             className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                         >
@@ -110,7 +110,7 @@ export default function AssessmentSetup({ exerciseId }: { exerciseId: number }) 
             )}
             {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
         </section>
-        {assessment && <SshLabOperations key={assessment.id} exerciseId={exerciseId} assessment={assessment} />}
+        {assessment && <SshLabOperations key={assessment.id} exerciseId={exerciseId} assessment={assessment} readOnly={readOnly} />}
         </>
     )
 }

@@ -384,7 +384,9 @@ DATABASE_PASSWORD=<mat-khau-PostgreSQL>
 JWT_SECRET=<khoa-ky-JWT-hien-co>
 ```
 
-Giữ tệp trong thư mục riêng của tài khoản Windows, giới hạn quyền đọc và giữ ngoài repository. Tệp này dùng định dạng Java properties. Nếu mật khẩu có dấu gạch chéo ngược, dùng `\\` trong tệp hoặc truyền giá trị gốc qua biến môi trường. Khóa JWT cần là Base64 chứa ít nhất 32 byte sau giải mã. Nếu mới thay `PATH` hoặc biến môi trường Windows, mở lại IntelliJ để nhận giá trị mới. Backend tự tạo hai Service Token và cấp chúng cho Runner mỗi lần khởi động.
+Tạo thư mục `%LOCALAPPDATA%\CyberRange` nếu chưa có. Tệp dùng định dạng Java properties và lưu giá trị dưới dạng văn bản. Trong **Properties → Security**, giới hạn quyền đọc cho tài khoản Windows chạy sản phẩm. Giữ tệp ngoài repository. Nếu mật khẩu có dấu gạch chéo ngược, dùng `\\` trong tệp hoặc truyền giá trị gốc qua biến môi trường. Biến môi trường cùng tên ghi đè giá trị trong tệp. Nếu Windows đã có `JWT_SECRET`, chỉ cần bổ sung mật khẩu PostgreSQL vào tệp. Giữ nguyên khóa hiện có, với tối thiểu 32 byte sau giải mã Base64. Nếu mới thay `PATH` hoặc biến môi trường Windows, mở lại IntelliJ để nhận giá trị mới. Backend tự tạo hai Service Token và cấp chúng cho Runner mỗi lần khởi động.
+
+Nếu khởi động báo `Managed Cyber Range configuration is invalid`, xử lý tất cả mục được liệt kê rồi chạy lại. Thông báo chỉ nêu tên cấu hình và điều kiện hợp lệ. Khi PostgreSQL từ chối đăng nhập, kiểm tra username và mật khẩu của `cyber_range_db` trong nguồn cấu hình đã chọn.
 
 Bật PostgreSQL và Docker Desktop. Trong PowerShell 5.1 tại thư mục gốc, chạy:
 

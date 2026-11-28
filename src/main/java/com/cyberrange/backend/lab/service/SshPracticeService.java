@@ -2,6 +2,7 @@ package com.cyberrange.backend.lab.service;
 
 import com.cyberrange.backend.common.exception.ServiceUnavailableException;
 import com.cyberrange.backend.assessment.repository.AssessmentRepository;
+import com.cyberrange.backend.assessment.entity.Assessment;
 import com.cyberrange.backend.assessment.service.BlueSshAccess;
 import com.cyberrange.backend.assessment.service.SshPracticeAssessmentPublisher;
 import java.time.Duration;
@@ -13,6 +14,7 @@ import com.cyberrange.backend.event.service.SshPracticeScenario;
 import com.cyberrange.backend.event.service.SshPracticeScenario.Criterion;
 import com.cyberrange.backend.event.service.SshPracticeScenario.Observation;
 import com.cyberrange.backend.exercise.repository.ExerciseParticipantRepository;
+import com.cyberrange.backend.exercise.service.ExerciseLifecycle;
 import com.cyberrange.backend.lab.repository.SshPracticeRepository;
 import com.cyberrange.backend.lab.repository.SshPracticeRepository.History;
 import com.cyberrange.backend.lab.repository.SshPracticeRepository.Run;
@@ -54,15 +56,18 @@ public class SshPracticeService {
     private final ExerciseParticipantRepository participants;
     private final JsonMapper json;
     private final SshPracticeAssessmentPublisher publisher;
+    private final ExerciseLifecycle lifecycle;
 
     public SshPracticeService(SshPracticeRepository runs, SshLabService labs, AssessmentRepository assessments,
-                              ExerciseParticipantRepository participants, JsonMapper json, SshPracticeAssessmentPublisher publisher) {
+                              ExerciseParticipantRepository participants, JsonMapper json, SshPracticeAssessmentPublisher publisher,
+                              ExerciseLifecycle lifecycle) {
         this.runs = runs;
         this.labs = labs;
         this.assessments = assessments;
         this.participants = participants;
         this.json = json;
         this.publisher = publisher;
+        this.lifecycle = lifecycle;
     }
 
     public void requireSchema() {
@@ -81,12 +86,47 @@ public class SshPracticeService {
 
     @Transactional
     public View approve(long assessmentId, long redTeam, long instructor) {
+        return approve(assessmentId, redTeam, instructor, null);
+    }
+
+    @Transactional
+    public View approve(long assessmentId, long redTeam, long instructor, UUID expectedSession) {
+        lifecycle.lockLabChanges();
         var assessment = assessments.findByIdForUpdate(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
+        var lab = validateApproval(assessment, redTeam);
+        if (expectedSession != null && !expectedSession.equals(lab.id())) {
+            throw new BusinessException("Phiên Lab đã thay đổi. Kiểm tra lại trước khi duyệt.");
+        }
+        var existing = runs.forSession(lab.id());
+        if (existing.isPresent()) {
+            return view(existing.get(), "INSTRUCTOR");
+        }
+        UUID id = UUID.randomUUID();
+        runs.create(id, lab.id(), assessment.getExercise().getId(), assessmentId, redTeam,
+                assessment.getTeam().getId(), SshPracticeScenario.VERSION);
+        var run = runs.forSession(lab.id()).orElseThrow();
+        if (run.id().equals(id)) {
+            runs.history(id, instructor, "APPROVED", null);
+        }
+        return view(run, "INSTRUCTOR");
+    }
+
+    public UUID approvalSession(long assessmentId, long redTeam) {
+        var assessment = assessments.findWithExerciseAndTeamById(assessmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
+        return validateApproval(assessment, redTeam).id();
+    }
+
+    private SshLabService.Status validateApproval(Assessment assessment, long redTeam) {
+        long assessmentId = assessment.getId();
         long exercise = assessment.getExercise().getId();
         long blue = assessment.getTeam().getId();
         if (!BlueSshAccess.isSsh(assessment) || redTeam == blue) {
             throw new BusinessException("Cần hai đội RED và BLUE khác nhau trong bài SSH.");
+        }
+        if (!assessment.getExercise().allowsStudentPractice()) {
+            throw new BusinessException("Exercise đang tạm dừng hoặc đã kết thúc.");
         }
         var roster = participants.findByExercise_IdOrderByJoinedAtAsc(exercise);
         boolean hasRed = roster.stream().anyMatch(p -> "RED".equals(p.getRole()) && p.getTeam() != null
@@ -105,23 +145,14 @@ public class SshPracticeService {
             if (existing.get().redTeamId() != redTeam) {
                 throw new BusinessException("Phiên Lab này đã cấp lượt cho một đội RED khác.");
             }
-            return view(existing.get(), "INSTRUCTOR");
+            return lab;
         }
         publisher.requireUnreviewed(assessment);
         if (runs.forAssessment(assessmentId).stream().anyMatch(previous ->
                 !labs.isStopped(previous.labSessionId()) || Set.of("SUBMITTED", "REVIEWED").contains(previous.state()))) {
             throw new BusinessException("Assessment đã có một lượt thực hành đang xử lý hoặc đã nộp.");
         }
-        UUID id = UUID.randomUUID();
-        runs.create(id, lab.id(), exercise, assessmentId, redTeam, blue, SshPracticeScenario.VERSION);
-        var run = runs.forSession(lab.id()).orElseThrow();
-        if (run.redTeamId() != redTeam) {
-            throw new BusinessException("Phiên Lab này đã cấp lượt cho một đội RED khác.");
-        }
-        if (run.id().equals(id)) {
-            runs.history(id, instructor, "APPROVED", null);
-        }
-        return view(run, "INSTRUCTOR");
+        return lab;
     }
 
     @Transactional
@@ -131,6 +162,9 @@ public class SshPracticeService {
         }
         var run = lock(id);
         String role = instructor ? "INSTRUCTOR" : role(run, actor);
+        if (!instructor) {
+            lifecycle.requireStudentPractice(run.exerciseId());
+        }
         ObjectNode input = json.createObjectNode().setAll((ObjectNode) run.submission());
         String next = run.state();
         Integer score = run.score();

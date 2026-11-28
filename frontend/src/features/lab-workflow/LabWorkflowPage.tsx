@@ -21,7 +21,7 @@ function LabWorkflowPage() {
         let current = true
         void getExerciseById(exerciseId).then((value) => {
             if (!current) return
-            if (value.status === 'CREATED' || value.status === 'READY') {
+            if (['CREATED', 'READY', 'RUNNING', 'PAUSED', 'STOPPED', 'COMPLETED', 'CANCELLED'].includes(value.status)) {
                 setExercise(value)
                 setLoadError(false)
             } else {
@@ -54,7 +54,8 @@ function LabWorkflowPage() {
             />
             {selectedExercise && selectedExercise.scenarioId === confirmed
                 && selectedExercise.scenarioName === 'SSH Security Incident Response' && (
-                <AssessmentSetup key={selectedExercise.id} exerciseId={selectedExercise.id} />
+                <AssessmentSetup key={selectedExercise.id} exerciseId={selectedExercise.id}
+                    readOnly={['STOPPED', 'COMPLETED', 'CANCELLED'].includes(selectedExercise.status)} />
             )}
         </div>
     )

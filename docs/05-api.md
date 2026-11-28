@@ -1285,6 +1285,10 @@ INSTRUCTOR
 
 # 21. Exercise Control API
 
+Giao diện quản trị hiện dùng `GET /api/v1/exercises/{id}/lifecycle` để đọc trạng thái và các thao tác khả dụng. `POST /api/v1/exercises/{id}/lifecycle` nhận `action`, `expectedStatus` và `environmentConfirmed` khi cần giảng viên xác nhận môi trường. Hai endpoint cấp quyền cho ADMIN và INSTRUCTOR. Phản hồi `202` yêu cầu đợi Lab dừng rồi gửi lại cùng thao tác, còn `409` báo điều kiện nghiệp vụ chưa đạt hoặc trạng thái đã thay đổi. API `/prepare` tiếp tục dùng chung quy tắc chuẩn bị.
+
+Các mục Start/Pause/Resume/Stop/Reset bên dưới mô tả thiết kế trước đây.
+
 Exercise Control phục vụ White Team. Chỉ `INSTRUCTOR` và `WHITE` được phân công cho Exercise mới được thực hiện Start/Pause/Resume/Stop/Reset; `ADMIN` không có quyền điều khiển vòng đời theo mặc định. Backend phải kiểm tra việc phân công `WHITE` ở cấp Exercise.
 
 ## 21.1. Start

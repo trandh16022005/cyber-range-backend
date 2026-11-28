@@ -15,6 +15,11 @@ interface ExerciseSelectorProps {
 const ELIGIBLE_STATUSES: ExerciseStatus[] = [
     'CREATED',
     'READY',
+    'RUNNING',
+    'PAUSED',
+    'STOPPED',
+    'COMPLETED',
+    'CANCELLED',
 ]
 
 function getStatusLabel(status: ExerciseStatus): string {
@@ -76,8 +81,7 @@ function ExerciseSelector({
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                    Chọn Exercise có trạng thái Mới tạo hoặc Sẵn sàng
-                    để bắt đầu quy trình thực hành.
+                    Chọn Exercise để điều phối bài thực hành hoặc xem lịch sử.
                 </p>
             </div>
 
@@ -104,8 +108,7 @@ function ExerciseSelector({
             ) : exercises.length === 0 ? (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
                     <p className="text-sm text-amber-800">
-                        Không có Exercise nào ở trạng thái CREATED
-                        hoặc READY.
+                        Chưa có Exercise.
                     </p>
                 </div>
             ) : (

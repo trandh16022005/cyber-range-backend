@@ -30,6 +30,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -81,6 +82,25 @@ class SshWorkflowIntegrationTest {
         String source = "192.0.2.42";
         lab.heartbeat(session.id(), "RUNNING", new Health(true, true, true, true, true, true, source, null));
         assertTrue(lab.status(exercise).ready());
+        var instructor = jwt().jwt(token -> token.subject(Long.toString(actor)).claim("role", "INSTRUCTOR"))
+                .authorities(new SimpleGrantedAuthority("ROLE_INSTRUCTOR"));
+        var admin = jwt().jwt(token -> token.subject(Long.toString(actor)).claim("role", "ADMIN"))
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        String lifecyclePath = "/api/v1/exercises/" + exercise + "/lifecycle";
+        mvc.perform(get(lifecyclePath).with(blue)).andExpect(status().isForbidden());
+        mvc.perform(post(lifecyclePath).with(blue).contentType("application/json")
+                .content("{\"action\":\"PREPARE\",\"expectedStatus\":\"CREATED\"}")).andExpect(status().isForbidden());
+        for (int i = 0; i < 2; i++) {
+            mvc.perform(post(lifecyclePath).with(admin).contentType("application/json")
+                    .content("{\"action\":\"PREPARE\",\"expectedStatus\":\"CREATED\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.data.exercise.status").value("READY"));
+        }
+        mvc.perform(post(lifecyclePath).with(instructor).contentType("application/json")
+                .content("{\"action\":\"START\",\"expectedStatus\":\"READY\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.exercise.startedAt").exists());
+        mvc.perform(post(lifecyclePath).with(instructor).contentType("application/json")
+                .content("{\"action\":\"PAUSE\",\"expectedStatus\":\"RUNNING\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.exercise.status").value("PAUSED"));
 
         db.sql("UPDATE ssh_lab_sessions SET created_at = clock_timestamp() - interval '15 seconds' WHERE id = :id")
                 .param("id", session.id()).update();
@@ -103,6 +123,11 @@ class SshWorkflowIntegrationTest {
         String alertPath = "/api/v1/exercises/" + exercise + "/security-alerts/" + alert.id();
         mvc.perform(get(alertPath).with(blue)).andExpect(status().isOk());
         mvc.perform(get(alertPath).with(outsider)).andExpect(status().isForbidden());
+        mvc.perform(post(alertPath + "/actions").with(blue).contentType("application/json")
+                .content("{\"action\":\"ACKNOWLEDGE\",\"assessmentId\":" + assessment + "}")).andExpect(status().isConflict());
+        mvc.perform(post(lifecyclePath).with(instructor).contentType("application/json")
+                .content("{\"action\":\"RESUME\",\"expectedStatus\":\"PAUSED\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.exercise.status").value("RUNNING"));
         mvc.perform(post(alertPath + "/actions").with(blue).contentType("application/json")
                 .content("{\"action\":\"ACKNOWLEDGE\",\"assessmentId\":" + assessment + "}")).andExpect(status().isOk());
         mvc.perform(post(alertPath + "/actions").with(blue).contentType("application/json")
@@ -144,9 +169,15 @@ class SshWorkflowIntegrationTest {
         assertTrue(results.stream().allMatch(result -> "COMPLETED".equals(result.status())));
         assertTrue(results.getFirst().detectionTimeSeconds() >= 7);
         assertNotNull(results.getFirst().responseTimeSeconds());
-        assertFalse(lab.stop(exercise).ready());
+        String complete = "{\"action\":\"COMPLETE\",\"expectedStatus\":\"RUNNING\"}";
+        mvc.perform(post(lifecyclePath).with(instructor).contentType("application/json").content(complete))
+                .andExpect(status().isAccepted()).andExpect(jsonPath("$.data.exercise.status").value("RUNNING"));
+        assertFalse(lab.status(exercise).ready());
         lab.heartbeat(session.id(), "STOPPED", new Health(false, false, false, false, false, false, null, null));
         assertEquals("STOPPED", lab.status(exercise).status());
+        mvc.perform(post(lifecyclePath).with(instructor).contentType("application/json").content(complete))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.exercise.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.data.exercise.endedAt").exists());
     }
 
     private long id(String query) {

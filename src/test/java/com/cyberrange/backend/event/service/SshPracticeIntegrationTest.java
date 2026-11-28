@@ -62,8 +62,15 @@ class SshPracticeIntegrationTest {
         labs.heartbeat(lab.id(), "RUNNING", new SshLabService.Health(true, true, true, true, true, true, "192.0.2.10", null));
 
         String approvals = "/api/v1/assessments/" + assessment + "/ssh-practice";
+        mvc.perform(get(approvals + "/approval").param("redTeamId", Long.toString(redTeam)).with(redUser))
+                .andExpect(status().isForbidden());
+        mvc.perform(get(approvals + "/approval").param("redTeamId", Long.toString(redTeam)).with(staff))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data").value(lab.id().toString()));
         String approval = "{\"redTeamId\":" + redTeam + "}";
         mvc.perform(post(approvals).with(redUser).contentType("application/json").content(approval)).andExpect(status().isForbidden());
+        mvc.perform(post(approvals).with(staff).contentType("application/json")
+                .content("{\"redTeamId\":" + redTeam + ",\"labSessionId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isConflict());
         mvc.perform(post(approvals).with(staff).contentType("application/json").content(approval)).andExpect(status().isOk());
         UUID id = practice.forAssessment(assessment).getFirst().id();
         assertEquals(id, practice.approve(assessment, redTeam, instructor).id());

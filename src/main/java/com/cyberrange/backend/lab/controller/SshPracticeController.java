@@ -18,7 +18,7 @@ import java.util.UUID;
 @ConditionalOnProperty(name = "ssh.practice.enabled", havingValue = "true")
 public class SshPracticeController {
 
-    public record Approve(long redTeamId) {}
+    public record Approve(long redTeamId, UUID labSessionId) {}
     public record ConnectionResult(boolean success) {}
 
     private final SshPracticeService practice;
@@ -47,7 +47,14 @@ public class SshPracticeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ApiResponse<View> approve(@PathVariable long id, @RequestBody Approve body, @AuthenticationPrincipal Jwt jwt) {
         practice.requireSchema();
-        return ApiResponse.success("Đã duyệt lượt", practice.approve(id, body.redTeamId(), Long.parseLong(jwt.getSubject())));
+        return ApiResponse.success("Đã duyệt lượt", practice.approve(id, body.redTeamId(), Long.parseLong(jwt.getSubject()), body.labSessionId()));
+    }
+
+    @GetMapping("/api/v1/assessments/{id}/ssh-practice/approval")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ApiResponse<UUID> approval(@PathVariable long id, @RequestParam long redTeamId) {
+        practice.requireSchema();
+        return ApiResponse.success("Có thể duyệt lượt", practice.approvalSession(id, redTeamId));
     }
 
     @PostMapping("/api/v1/ssh-practice/{id}/actions")

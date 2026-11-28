@@ -67,7 +67,9 @@ function apiError(cause: unknown) {
         : 'Không thể hoàn thành thao tác.'
 }
 
-export default function SshLabOperations({ exerciseId, assessment }: { exerciseId: number; assessment: Assessment }) {
+export default function SshLabOperations({ exerciseId, assessment, readOnly }: {
+    exerciseId: number; assessment: Assessment; readOnly: boolean
+}) {
     const [lab, setLab] = useState<LabStatus | null>(null)
     const [loaded, setLoaded] = useState(false)
     const [pending, setPending] = useState(false)
@@ -123,7 +125,7 @@ export default function SshLabOperations({ exerciseId, assessment }: { exerciseI
                             {active && !lab.desiredRunning ? ' · Đang dừng' : ''}
                         </p>
                         <button type="button" className={button}
-                            disabled={pending || !reachable || (!!active && (!lab.desiredRunning || lab.assessmentId !== assessment.id))}
+                            disabled={readOnly || pending || !reachable || (!!active && (!lab.desiredRunning || lab.assessmentId !== assessment.id))}
                             onClick={() => void operate(active ? 'stop' : 'start')}>
                             {active ? 'Dừng Lab' : 'Khởi động Lab'}
                         </button>
@@ -149,7 +151,7 @@ export default function SshLabOperations({ exerciseId, assessment }: { exerciseI
                     <p role="alert" className="text-sm text-red-700">{lab.health?.error ?? 'Lab runner không phản hồi đúng hạn.'}</p>
                 )}
             </section>
-            <SshPracticeInstructor assessment={assessment} />
+            <SshPracticeInstructor assessment={assessment} lab={lab} reachable={reachable} />
             <AuthenticationEvents exerciseId={exerciseId} />
             <AlertPanel exerciseId={exerciseId} assessmentId={assessment.id} />
         </>

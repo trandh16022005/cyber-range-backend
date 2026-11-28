@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
     ClipboardList,
     Eye,
@@ -27,12 +27,14 @@ import type {
 
 function AssessmentManagementPage() {
     const { role } = useAuth()
+    const [searchParams] = useSearchParams()
+    const exerciseParam = Number(searchParams.get('exerciseId'))
 
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [assessments, setAssessments] = useState<Assessment[]>([])
 
     const [selectedExerciseId, setSelectedExerciseId] =
-        useState<number | ''>('')
+        useState<number | ''>(Number.isSafeInteger(exerciseParam) && exerciseParam > 0 ? exerciseParam : '')
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)

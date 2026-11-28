@@ -61,6 +61,10 @@ Chuẩn bị ba tài khoản riêng gồm một INSTRUCTOR, một STUDENT RED v�
 
 ### INSTRUCTOR
 
+Trong **Exercises → View → Quản lý vòng đời Exercise**, dùng **Xác nhận sẵn sàng**, **Bắt đầu thực hành**, **Tạm dừng**, **Tiếp tục**, **Dừng thực hành** hoặc **Hoàn thành** theo trạng thái hiện tại. Với kịch bản SSH, chuẩn bị Assessment và đợi Lab báo READY trước khi xác nhận sẵn sàng. Khi dừng hoặc hoàn thành, giữ trang mở để giao diện đợi Runner xác nhận STOPPED. Nếu đã tải lại trang trong lúc đợi, chọn lại thao tác sau khi Lab dừng. Hoàn thành yêu cầu các Assessment đã được duyệt.
+
+Trong **Điều phối bài thực hành**, chọn đội RED và đọc điều kiện cạnh nút duyệt. Backend kiểm tra phiên Lab, Assessment và phân công học viên. Nếu báo schema bài thực hành chưa sẵn sàng, quản trị viên kiểm tra migration 002 và 003 theo mục Chuẩn bị môi trường.
+
 1. Vào **Lab Workflow**, xác nhận Exercise và Scenario, mở Assessment và bấm **Khởi động Lab**. Kiểm tra client, Ubuntu Target, SSH và Collector đều đạt.
 2. Trong **Điều phối bài thực hành**, chọn đội RED rồi bấm **Duyệt lượt cho phiên Lab hiện tại**. Học viên sẽ thấy bài trong menu **Bài thực hành**.
 3. Khi BLUE gửi đề xuất, đọc log, nhận định và nội dung đề xuất. Nhập nhận xét rồi chọn **Duyệt phản ứng mô phỏng** hoặc **Trả lại đề xuất**. Khi duyệt, bảng log phục hồi mô phỏng mở cho BLUE.

@@ -11,6 +11,8 @@ import { getExerciseById } from './exerciseService'
 import type { Exercise } from './exercise.types'
 
 import ParticipantList from './components/ParticipantList'
+import ExerciseLifecycleControls from './components/ExerciseLifecycleControls'
+import { useAuth } from '../auth/AuthContext'
 
 const statusStyles: Record<string, string> = {
     CREATED: 'bg-slate-100 text-slate-700',
@@ -29,6 +31,7 @@ function formatDate(value: string | null) {
 }
 
 function ExerciseDetailPage() {
+    const { role } = useAuth()
     const { id } = useParams()
     const navigate = useNavigate()
 
@@ -248,6 +251,9 @@ function ExerciseDetailPage() {
             </div>
 
             {/* Participant Management */}
+            {(role === 'ADMIN' || role === 'INSTRUCTOR') && (
+                <ExerciseLifecycleControls key={exercise.id} exercise={exercise} onUpdate={setExercise} />
+            )}
             <ParticipantList exerciseId={exercise.id} />
         </div>
     )

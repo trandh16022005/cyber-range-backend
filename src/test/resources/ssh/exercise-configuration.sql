@@ -15,7 +15,7 @@ SELECT id, 'ssh-fixture-admin', 'ssh-fixture-admin@example.invalid', 'disabled-f
 FROM roles WHERE name = 'ADMIN'
 ON CONFLICT (username) DO NOTHING;
 INSERT INTO teams (name) VALUES ('SSH Fixture Blue') ON CONFLICT (name) DO NOTHING;
-INSERT INTO cyber_ranges (name, environment_type) VALUES ('SSH Fixture Range', 'DOCKER')
+INSERT INTO cyber_ranges (name, environment_type, status) VALUES ('SSH Fixture Range', 'DOCKER', 'ACTIVE')
 ON CONFLICT (name) DO NOTHING;
 INSERT INTO scenarios (name, type, status)
 SELECT 'SSH Security Incident Response', 'SSH_SECURITY', 'PUBLISHED'

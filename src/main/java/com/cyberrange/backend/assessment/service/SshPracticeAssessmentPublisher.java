@@ -98,6 +98,9 @@ public class SshPracticeAssessmentPublisher {
             data.put("origin", "TRAINING_SIMULATION");
             data.put("practiceRunId", run.id().toString());
             data.put("scenarioVersion", run.version());
+            if (submission.hasNonNull("simulatedAlertId")) {
+                data.put("alertId", submission.path("simulatedAlertId").asLong());
+            }
             data.put("proof", passed[i] ? proof : "CRITERION_NOT_MET");
             data.set("observationIds", submission.path("observationIds"));
             var item = new Evidence(assessment.getExercise(), null, SshAssessmentEvaluator.EVIDENCE_TYPE, data);

@@ -27,7 +27,7 @@ import com.cyberrange.backend.lab.repository.SshPracticeRepository;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import com.cyberrange.backend.scoring.engine.ScoringEngine;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +84,9 @@ public class SshAssessmentEvaluator {
 
     @Transactional
     public Evaluation evaluate(long exerciseId, long alertId, long actorId, EvaluationRequest request) {
+        if (alerts.isSimulated(alertId)) {
+            throw new BusinessException("Đánh giá cảnh báo mô phỏng trong trang Bài thực hành SSH.");
+        }
         var alert = alerts.find(exerciseId, alertId, true)
                 .orElseThrow(() -> new ResourceNotFoundException("Security Alert not found"));
         if (alert.assessmentId() == null) {
@@ -148,8 +151,7 @@ public class SshAssessmentEvaluator {
     }
 
     static BigDecimal normalizedScore(BigDecimal awarded, BigDecimal maximum) {
-        return maximum.signum() > 0
-                ? awarded.multiply(BigDecimal.valueOf(100)).divide(maximum, 2, RoundingMode.HALF_UP) : null;
+        return ScoringEngine.normalize(awarded, maximum);
     }
 
     private void evaluateTask(Assessment assessment, AssessmentResult result, SshResponseWorkflow.Details details,

@@ -2,6 +2,7 @@ package com.cyberrange.backend.event.repository;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import com.cyberrange.backend.event.service.SshObservationService.PracticeDetection;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -31,29 +32,52 @@ public class SshObservationRepository {
                 .param("session", sessionId).param("record", recordKey).param("id", eventId).update();
     }
 
-    public List<Failure> failures(UUID session, long exercise, long service, String ip, String account, Instant from, Instant to) {
+    public Optional<PracticeDetection> practiceDetection(UUID session, String prefix) {
+        return db.sql("""
+                SELECT DISTINCT a.id, a.detected_at FROM security_alerts a
+                JOIN security_alert_events l ON l.alert_id = a.id JOIN events e ON e.id = l.event_id
+                WHERE a.lab_session_id = :session AND e.source = 'SSH_PRACTICE' AND starts_with(e.collector_record_key, :prefix)
+                ORDER BY a.detected_at, a.id LIMIT 1
+                """).param("session", session).param("prefix", prefix)
+                .query((rs, row) -> new PracticeDetection(rs.getLong("id"), rs.getObject("detected_at", OffsetDateTime.class).toInstant()))
+                .optional();
+    }
+
+    public List<Long> practiceObservationIds(long alertId, UUID runId) {
+        return db.sql("""
+                SELECT split_part(e.collector_record_key, ':', 3)::bigint
+                FROM security_alert_events l JOIN events e ON e.id = l.event_id
+                WHERE l.alert_id = :alert AND e.source = 'SSH_PRACTICE'
+                  AND starts_with(e.collector_record_key, :prefix)
+                """).param("alert", alertId).param("prefix", "practice:" + runId + ":")
+                .query(Long.class).list();
+    }
+
+    public List<Failure> failures(UUID session, long exercise, long service, String ip, String account, Instant from, Instant to, String source) {
         return db.sql("""
                 SELECT id, event_timestamp FROM events
                 WHERE exercise_id = :exercise AND service_id = :service AND ssh_lab_session_id = :session
-                  AND event_type = 'SSH_AUTH_FAILURE' AND data->>'sourceIp' = :ip AND data->>'username' = :account
+                  AND event_type = 'SSH_AUTH_FAILURE' AND source = :source AND data->>'sourceIp' = :ip AND data->>'username' = :account
                   AND event_timestamp BETWEEN :from AND :to
                 ORDER BY event_timestamp, id
                 """)
                 .param("exercise", exercise).param("service", service).param("session", session)
-                .param("ip", ip).param("account", account).param("from", utc(from)).param("to", utc(to))
+                .param("ip", ip).param("account", account).param("source", source).param("from", utc(from)).param("to", utc(to))
                 .query((rs, row) -> new Failure(rs.getLong("id"), rs.getObject("event_timestamp", OffsetDateTime.class).toInstant()))
                 .list();
     }
 
     public long findOrCreateAlert(UUID session, long exercise, long service, String ip, String account,
-                                  Instant first, Instant last, Instant detected) {
+                                  Instant first, Instant last, Instant detected, String source) {
         var existing = db.sql("""
-                SELECT id FROM security_alerts WHERE lab_session_id = :session AND service_id = :service
+                SELECT id FROM security_alerts a WHERE lab_session_id = :session AND service_id = :service
                   AND source_ip = :ip AND account = :account AND first_event_at <= :last AND last_event_at >= :first
+                  AND EXISTS (SELECT 1 FROM security_alert_events l JOIN events e ON e.id = l.event_id
+                              WHERE l.alert_id = a.id AND e.source = :source)
                 ORDER BY detected_at, id LIMIT 1
                 """)
                 .param("session", session).param("service", service).param("ip", ip).param("account", account)
-                .param("last", utc(last)).param("first", utc(first)).query(Long.class).optional();
+                .param("last", utc(last)).param("first", utc(first)).param("source", source).query(Long.class).optional();
         return existing.orElseGet(() -> db.sql("""
                 INSERT INTO security_alerts (exercise_id, service_id, lab_session_id, source_ip, account,
                     first_event_at, last_event_at, detected_at, severity, status)

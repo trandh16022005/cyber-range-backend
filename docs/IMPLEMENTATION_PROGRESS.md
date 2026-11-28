@@ -1,5 +1,36 @@
 # Tiến độ triển khai Cyber Range
 
+## Nộp bài có phiên bản và xác nhận trước công bố
+
+- TIME_THRESHOLD dùng durationField (giây), maximumSeconds và score. Engine phân biệt chưa đo, giá trị không hợp lệ, vượt ngưỡng và đạt. Đã thêm kiểm thử biên 0 và 60 giây.
+- SSH Practice lưu snapshot bài nộp trong lịch sử cùng người nộp, Assessment, Team, Lab Session và phiên bản. Yêu cầu bổ sung mở lại phần báo cáo. CONFIRM_REVIEW xác nhận phiên bản, PUBLISH_REVIEW mới ghi điểm chính thức. REVIEW tiếp tục hỗ trợ bài nộp cũ chưa có submittedBy.
+- Database chính đang dùng rubric cũ. Còn cần cấu hình rubric riêng, chấm tự động khi nộp, điểm thủ công theo criterion và nghiệm thu trình duyệt trên dữ liệu chính. Chưa chạy migration.
+
+## Scoring dùng chung
+
+- Tách xử lý rule và phép chuẩn hóa vào package scoring. Assessment tiếp tục điều phối giao dịch và bảo vệ kết quả REVIEWED trước lần chấm lại.
+- Thêm SET_MATCH theo tỷ lệ ID đúng trên hợp hai tập và hỗ trợ điểm một phần khi Criterion có cấu hình tương ứng. Cấu hình SSH đang dùng rule cũ. Chưa áp dụng migration hoặc đổi điểm trên database chính.
+- Còn lại tích hợp tiêu chí SSH với SET_MATCH, TIME_THRESHOLD, phiên bản bài nộp, giao diện review và nghiệm thu qua trình duyệt.
+
+## Checkbox điều tra và DTO bài thực hành
+
+- Lượt ACTIVE của Exercise #3 đã xác nhận cảnh báo, nhưng chưa lưu lựa chọn bản ghi. Qua mã nguồn, bảng chỉ nhận callback chọn khi BLUE đã xác nhận cảnh báo. Chưa xác minh điều kiện cụ thể làm nút bị khóa trong phiên trình duyệt gặp lỗi.
+- Tách cột chọn, tô sáng dòng đã chọn, hiển thị số lượng và liệt kê các điều kiện còn thiếu. Giữ bản nháp theo ID lượt qua polling và khôi phục lựa chọn đã lưu khi mở lại.
+- Defensive Tasks lấy từ Assessment Results, trả thêm taskId và giữ name/maximum. Dữ liệu chính của Assessment #3 có bảy tên nhiệm vụ và tổng 100 điểm. Chưa thu được payload của lỗi chỉ hiện số thứ tự.
+- Đã tách request và response SSH Practice sang package dto. Nghiệm thu đăng nhập BLUE, lưu điều tra và kiểm tra luồng ba vai trò trên giao diện chính vẫn còn.
+
+## Event và Alert trong bài thực hành SSH
+
+- Trước thay đổi, Exercise #3 có lượt APPROVED, kết nối NONE, một Event xác thực thành công và không có Alert. Mô phỏng trước đây chỉ lưu trạng thái trong lượt.
+- Bộ dữ liệu cố định nay đi qua ingress và Detection Engine, ghi nguồn SSH_PRACTICE và provenance SIMULATED_PRACTICE. Correlation tách nguồn Collector. Workflow vận hành thực từ chối thao tác phản ứng lên Alert mô phỏng. Evidence mới lưu ID Alert, còn rubric dùng các Event thực sự được Engine liên kết.
+- Viewer hiển thị bộ lọc, trang, ID Alert và nguồn dữ liệu trên 100 Event gần nhất. Raw log từ Collector hiện không được trả cho học viên. Phân trang server và lọc/redact raw log Collector còn lại.
+- Hồi quy trên PostgreSQL cô lập xác nhận STUDENT BLUE tải lượt đã có Event, mô phỏng phát lại vẫn chỉ có sáu Event và một Alert, và điểm phục hồi đúng/sai là 100/85 theo rubric. TypeScript và Vite build đạt. Chưa thu được stack trace của request STUDENT trả 500 trên sản phẩm chính và chưa nghiệm thu đủ ba vai trò qua giao diện.
+
+## Kiểm tra khởi động sản phẩm chính
+
+- Đã lưu cấu hình PostgreSQL trong thư mục riêng của tài khoản Windows và chạy `./mvnw.cmd spring-boot:run` với `cyber_range_db`. Backend khởi động trên `127.0.0.1:8080` với Hibernate validate, Runner xác thực và gửi heartbeat `RUNNING` được Backend chấp nhận. Frontend trả HTTP 200 trên cổng 5173 và proxy tới API có bảo vệ trả HTTP 401 khi thiếu xác thực.
+- Lỗi duyệt lượt trong giao diện vẫn cần tái hiện với phiên đăng nhập ADMIN hoặc INSTRUCTOR. Chưa áp dụng migration hoặc thay đổi Exercise Lifecycle trong bước cấu hình này.
+
 ## Exercise Lifecycle và duyệt lượt SSH
 
 - Trang chi tiết Exercise có nút vòng đời cho ADMIN và INSTRUCTOR. Frontend đọc thao tác từ Backend, theo dõi yêu cầu dừng Lab và cập nhật Exercise sau khi Runner xác nhận. Lab Workflow giữ khả năng chọn Exercise đang chạy, tạm dừng và đã kết thúc để xem lại.

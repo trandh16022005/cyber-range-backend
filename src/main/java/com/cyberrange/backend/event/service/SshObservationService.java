@@ -25,6 +25,10 @@ public class SshObservationService {
     public record Observation(String recordKey, Instant timestamp, String sourceIp, String username,
                               String outcome, String targetHost, String log) {}
     public record Receipt(String recordKey, long eventId, boolean duplicate) {}
+    public record PracticeDetection(long alertId, Instant detectedAt) {}
+
+    private static final String COLLECTOR = "OPENSSH_COLLECTOR";
+    private static final String PRACTICE = "SSH_PRACTICE";
 
     private static final Pattern RECORD_KEY = Pattern.compile("[A-Za-z0-9:_-]{1,160}");
     private static final Pattern ACCOUNT = Pattern.compile("[A-Za-z0-9_@.$-]{1,100}");
@@ -67,12 +71,32 @@ public class SshObservationService {
         if ("STOPPED".equals(session.status())) {
             throw new BusinessException("SSH Lab is stopped");
         }
-        return batch.stream().map(item -> ingestOne(session, item, Instant.now())).toList();
+        return batch.stream().map(item -> ingestOne(session, item, Instant.now(), COLLECTOR, null)).toList();
     }
 
-    private Receipt ingestOne(SshLabRepository.Session session, Observation item, Instant now) {
+    @Transactional
+    public java.util.Optional<PracticeDetection> ingestPractice(UUID sessionId, UUID runId, Instant startedAt) {
+        var session = labs.lock(sessionId).filter(SshLabRepository.Session::desiredRunning)
+                .orElseThrow(() -> new BusinessException("SSH Lab is not running"));
+        String prefix = "practice:" + runId + ":";
+        for (var row : SshPracticeScenario.OBSERVATIONS) {
+            var observation = new Observation(prefix + row.id(), startedAt, row.source(), row.account(), row.outcome(),
+                    row.target(), "Synthetic SSH authentication fixture: " + row.outcome());
+            ingestOne(session, observation, Instant.now(), PRACTICE, row.second());
+        }
+        return observations.practiceDetection(sessionId, prefix);
+    }
+
+    public List<Long> practiceObservationIds(long alertId, UUID runId) {
+        return observations.practiceObservationIds(alertId, runId);
+    }
+
+    private Receipt ingestOne(SshLabRepository.Session session, Observation item, Instant now, String source, Integer scenarioSecond) {
         if (item == null || item.recordKey() == null || !RECORD_KEY.matcher(item.recordKey()).matches()) {
             throw new IllegalArgumentException("Invalid Collector record key");
+        }
+        if (COLLECTOR.equals(source) && item.recordKey().startsWith("practice:")) {
+            throw new IllegalArgumentException("Reserved practice record key");
         }
         var duplicate = observations.duplicate(session.id(), item.recordKey());
         if (duplicate.isPresent()) {
@@ -99,27 +123,30 @@ public class SshObservationService {
         data.put("authenticationOutcome", item.outcome());
         data.put("targetHost", item.targetHost());
         data.put("raw", item.log());
-        data.put("provenance", "OBSERVED_LAB");
+        data.put("provenance", scenarioSecond == null ? "OBSERVED_LAB" : "SIMULATED_PRACTICE");
+        if (scenarioSecond != null) {
+            data.put("scenarioSecond", scenarioSecond);
+        }
         Instant eventTime = item.timestamp().truncatedTo(ChronoUnit.MICROS);
         var event = events.createEvent(new CreateEventRequest(session.exerciseId(), session.assetId(), session.serviceId(),
                 failure ? "SSH_AUTH_FAILURE" : "SSH_AUTH_SUCCESS", failure ? "MEDIUM" : "INFO",
-                eventTime, "OPENSSH_COLLECTOR", data));
+                eventTime, source, data));
         observations.markObserved(event.id(), session.id(), item.recordKey());
 
         if (failure && !item.timestamp().isBefore(now.minus(DETECTION_LATENESS))) {
-            detect(session, item.username(), ip, event.id(), eventTime, now);
+            detect(session, item.username(), ip, event.id(), eventTime, now, source);
         }
         return new Receipt(item.recordKey(), event.id(), false);
     }
 
-    private void detect(SshLabRepository.Session session, String account, String ip, long eventId, Instant eventTime, Instant now) {
+    private void detect(SshLabRepository.Session session, String account, String ip, long eventId, Instant eventTime, Instant now, String source) {
         var incoming = new SshDetectionWindow.Failure(eventId, eventTime);
         var failures = observations.failures(session.id(), session.exerciseId(), session.serviceId(), ip, account,
-                        eventTime.minus(window), eventTime.plus(window)).stream()
+                        eventTime.minus(window), eventTime.plus(window), source).stream()
                 .map(failure -> new SshDetectionWindow.Failure(failure.id(), failure.at())).toList();
         SshDetectionWindow.matching(failures, incoming, threshold, window).ifPresent(matching -> {
             long alertId = observations.findOrCreateAlert(session.id(), session.exerciseId(), session.serviceId(), ip,
-                    account, matching.getFirst().at(), matching.getLast().at(), now);
+                    account, matching.getFirst().at(), matching.getLast().at(), now, source);
             matching.forEach(failure -> observations.link(alertId, failure.id()));
         });
     }

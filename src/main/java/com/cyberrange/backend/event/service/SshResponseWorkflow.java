@@ -98,6 +98,9 @@ public class SshResponseWorkflow {
             requireStudentAlert(alert, actor);
             lifecycle.requireStudentPractice(exercise);
         }
+        if (alerts.isSimulated(alert.id())) {
+            throw new BusinessException("Xử lý cảnh báo mô phỏng trong trang Bài thực hành SSH.");
+        }
         var history = alerts.history(id);
         switch (command.action()) {
             case "ACKNOWLEDGE" -> {

@@ -86,6 +86,16 @@ class SshPracticeIntegrationTest {
         practice.finishConnection(lab.id(), id, true);
         submit(id, redUser, "{\"action\":\"START_SCENARIO\"}", 200);
         submit(id, redUser, "{\"action\":\"START_SCENARIO\"}", 200);
+        mvc.perform(get("/api/v1/ssh-practice").with(blueUser)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].observedEvents.length()").value(6))
+                .andExpect(jsonPath("$.data[0].criteria.length()").value(7))
+                .andExpect(jsonPath("$.data[0].criteria[0].taskId").isNumber())
+                .andExpect(jsonPath("$.data[0].criteria[0].name").value("Detect SSH Authentication Failures"))
+                .andExpect(jsonPath("$.data[0].criteria[0].maximum").value(10.0))
+                .andExpect(jsonPath("$.data[0].observedEvents[0].provenance").value("SIMULATED_PRACTICE"))
+                .andExpect(jsonPath("$.data[0].submission.simulatedAlertId").isNumber());
+        assertEquals(1L, db.sql("SELECT count(*) FROM security_alerts WHERE lab_session_id=:session")
+                .param("session", lab.id()).query(Long.class).single());
 
         mvc.perform(get("/api/v1/ssh-practice").with(redUser)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].observations").isEmpty());
@@ -125,15 +135,21 @@ class SshPracticeIntegrationTest {
                  "responseOutcome":"Đã duyệt trong mô phỏng.","recoveryVerification":"Xác thực hợp lệ thành công.",
                  "lessonsLearned":"Kiểm tra lại dịch vụ sau phản ứng."}}
                 """.formatted(recovered), 200);
+        submit(id, staff, "{\"action\":\"PUBLISH_REVIEW\"}", 409);
         submit(id, staff, """
-                {"action":"REVIEW","note":"Kết luận phù hợp với dữ liệu.","analysisAccepted":true,"reportAccepted":true}
+                {"action":"CONFIRM_REVIEW","note":"Kết luận phù hợp với dữ liệu.","analysisAccepted":true,"reportAccepted":true}
                 """, 200);
+        assertEquals("SUBMITTED", practice.forAssessment(assessment).getFirst().state());
+        submit(id, staff, "{\"action\":\"PUBLISH_REVIEW\"}", 200);
 
         mvc.perform(get("/api/v1/ssh-practice").with(blueUser)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].score").value(recovered ? 100 : 85));
         assertEquals("REVIEWED", practice.forAssessment(assessment).getFirst().state());
-        assertEquals(0L, db.sql("SELECT count(*) FROM events WHERE exercise_id=:id").param("id", exercise).query(Long.class).single());
-        submit(id, staff, "{\"action\":\"REVIEW\"}", 200);
+        assertEquals(6L, db.sql("SELECT count(*) FROM events WHERE exercise_id=:id AND source='SSH_PRACTICE'")
+                .param("id", exercise).query(Long.class).single());
+        assertEquals(0L, db.sql("SELECT count(*) FROM events WHERE exercise_id=:id AND source='OPENSSH_COLLECTOR'")
+                .param("id", exercise).query(Long.class).single());
+        submit(id, staff, "{\"action\":\"PUBLISH_REVIEW\"}", 200);
         assertEquals(7L, db.sql("""
                 SELECT count(*) FROM evidence WHERE exercise_id=:id AND data->>'origin'='TRAINING_SIMULATION'
                 """).param("id", exercise).query(Long.class).single());

@@ -21,7 +21,7 @@ public class SshPracticeRepository {
     public record History(Long actorId, String action, String detail, OffsetDateTime createdAt) {}
     public record ObservedEvent(long id, String eventType, String severity, OffsetDateTime eventTimestamp,
                                 OffsetDateTime collectedAt, String sourceAddress, String account, String target,
-                                String outcome, String raw) {}
+                                String outcome, String raw, String provenance, Long alertId) {}
 
     private final JdbcClient jdbc;
     private final JsonMapper json;
@@ -93,13 +93,21 @@ public class SshPracticeRepository {
 
     public List<ObservedEvent> observedEvents(UUID session, long exercise) {
         return jdbc.sql("""
-                SELECT id,event_type,severity,event_timestamp,created_at AS collected_at,
+                SELECT e.id,event_type,severity,event_timestamp,e.created_at AS collected_at,
                        data->>'sourceIp' AS source_address, data->>'username' AS account,
                        data->>'targetHost' AS target, data->>'authenticationOutcome' AS outcome,
-                       data->>'raw' AS raw
-                FROM events WHERE ssh_lab_session_id=:session AND exercise_id=:exercise AND source='OPENSSH_COLLECTOR'
-                ORDER BY event_timestamp DESC,id DESC LIMIT 100
-                """).param("session", session).param("exercise", exercise).query(ObservedEvent.class).list();
+                       CASE WHEN source='SSH_PRACTICE' THEN data->>'raw' END AS raw,
+                       data->>'provenance' AS provenance,
+                       (SELECT min(l.alert_id) FROM security_alert_events l WHERE l.event_id=e.id) AS alert_id
+                FROM events e WHERE ssh_lab_session_id=:session AND exercise_id=:exercise
+                    AND source IN ('OPENSSH_COLLECTOR', 'SSH_PRACTICE')
+                ORDER BY event_timestamp DESC,e.id DESC LIMIT 100
+                """).param("session", session).param("exercise", exercise).query((rs, row) -> new ObservedEvent(
+                rs.getLong("id"), rs.getString("event_type"), rs.getString("severity"),
+                rs.getObject("event_timestamp", OffsetDateTime.class), rs.getObject("collected_at", OffsetDateTime.class),
+                rs.getString("source_address"), rs.getString("account"), rs.getString("target"),
+                rs.getString("outcome"), rs.getString("raw"), rs.getString("provenance"),
+                rs.getObject("alert_id", Long.class))).list();
     }
 
     public boolean connection(UUID id, String from, String to) {

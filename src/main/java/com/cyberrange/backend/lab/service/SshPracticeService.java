@@ -1,7 +1,12 @@
 package com.cyberrange.backend.lab.service;
 
+import com.cyberrange.backend.lab.dto.SshPracticeActionRequest;
+import com.cyberrange.backend.lab.dto.SshPracticeResponse;
+import com.cyberrange.backend.lab.dto.SshPracticeMetricsResponse;
 import com.cyberrange.backend.common.exception.ServiceUnavailableException;
 import com.cyberrange.backend.assessment.repository.AssessmentRepository;
+import com.cyberrange.backend.assessment.repository.AssessmentResultRepository;
+import com.cyberrange.backend.lab.dto.SshPracticeTaskResponse;
 import com.cyberrange.backend.assessment.entity.Assessment;
 import com.cyberrange.backend.assessment.service.BlueSshAccess;
 import com.cyberrange.backend.assessment.service.SshPracticeAssessmentPublisher;
@@ -11,12 +16,11 @@ import java.util.Map;
 import com.cyberrange.backend.common.exception.BusinessException;
 import com.cyberrange.backend.common.exception.ResourceNotFoundException;
 import com.cyberrange.backend.event.service.SshPracticeScenario;
-import com.cyberrange.backend.event.service.SshPracticeScenario.Criterion;
+import com.cyberrange.backend.event.service.SshObservationService;
 import com.cyberrange.backend.event.service.SshPracticeScenario.Observation;
 import com.cyberrange.backend.exercise.repository.ExerciseParticipantRepository;
 import com.cyberrange.backend.exercise.service.ExerciseLifecycle;
 import com.cyberrange.backend.lab.repository.SshPracticeRepository;
-import com.cyberrange.backend.lab.repository.SshPracticeRepository.History;
 import com.cyberrange.backend.lab.repository.SshPracticeRepository.Run;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -35,17 +39,7 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class SshPracticeService {
 
-    public record Action(String action, String note, List<Long> observationIds, String account, String target,
-                         Boolean recovered, Boolean analysisAccepted, Boolean reportAccepted,
-                         String source, String impact, Map<String, String> reportSections) {}
-    public record View(UUID id, long exerciseId, long assessmentId, long redTeamId, long blueTeamId, String role,
-                       String state, boolean ready, String connectionStatus, Integer version, String target,
-                       List<Criterion> criteria, List<Observation> observations, List<Observation> recovery,
-                       boolean alert, JsonNode submission, Integer score, List<History> history,
-                       List<SshPracticeRepository.ObservedEvent> observedEvents, Metrics metrics) {}
 
-    public record Metrics(Long systemDetectionMillis, Long studentDetectionSeconds, Long studentResponseSeconds,
-                          Long simulatedResponseSeconds) {}
 
     private static final List<String> REPORT_SECTIONS = List.of("summary", "timeline", "relatedEvents", "affectedAccount",
             "affectedHost", "findings", "proposedResponse", "responseOutcome", "recoveryVerification", "lessonsLearned");
@@ -53,21 +47,25 @@ public class SshPracticeService {
     private final SshPracticeRepository runs;
     private final SshLabService labs;
     private final AssessmentRepository assessments;
+    private final AssessmentResultRepository assessmentResults;
     private final ExerciseParticipantRepository participants;
     private final JsonMapper json;
     private final SshPracticeAssessmentPublisher publisher;
     private final ExerciseLifecycle lifecycle;
+    private final SshObservationService observations;
 
     public SshPracticeService(SshPracticeRepository runs, SshLabService labs, AssessmentRepository assessments,
                               ExerciseParticipantRepository participants, JsonMapper json, SshPracticeAssessmentPublisher publisher,
-                              ExerciseLifecycle lifecycle) {
+                              ExerciseLifecycle lifecycle, SshObservationService observations, AssessmentResultRepository assessmentResults) {
         this.runs = runs;
         this.labs = labs;
         this.assessments = assessments;
+        this.assessmentResults = assessmentResults;
         this.participants = participants;
         this.json = json;
         this.publisher = publisher;
         this.lifecycle = lifecycle;
+        this.observations = observations;
     }
 
     public void requireSchema() {
@@ -76,21 +74,21 @@ public class SshPracticeService {
         }
     }
 
-    public List<View> assigned(long actor) {
+    public List<SshPracticeResponse> assigned(long actor) {
         return runs.forActor(actor).stream().map(run -> view(run, role(run, actor))).toList();
     }
 
-    public List<View> forAssessment(long assessmentId) {
+    public List<SshPracticeResponse> forAssessment(long assessmentId) {
         return runs.forAssessment(assessmentId).stream().map(run -> view(run, "INSTRUCTOR")).toList();
     }
 
     @Transactional
-    public View approve(long assessmentId, long redTeam, long instructor) {
+    public SshPracticeResponse approve(long assessmentId, long redTeam, long instructor) {
         return approve(assessmentId, redTeam, instructor, null);
     }
 
     @Transactional
-    public View approve(long assessmentId, long redTeam, long instructor, UUID expectedSession) {
+    public SshPracticeResponse approve(long assessmentId, long redTeam, long instructor, UUID expectedSession) {
         lifecycle.lockLabChanges();
         var assessment = assessments.findByIdForUpdate(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assessment not found"));
@@ -156,7 +154,7 @@ public class SshPracticeService {
     }
 
     @Transactional
-    public View act(UUID id, long actor, boolean instructor, Action request) {
+    public SshPracticeResponse act(UUID id, long actor, boolean instructor, SshPracticeActionRequest request) {
         if (request.action() == null) {
             throw new IllegalArgumentException("Thiếu thao tác.");
         }
@@ -181,18 +179,24 @@ public class SshPracticeService {
             }
             case "START_SCENARIO" -> {
                 requireRole(role, "RED");
-                if (!"APPROVED".equals(run.state())) {
+                if (!canStartScenario(run)) {
                     return view(run, role);
                 }
                 requireReady(run);
                 if (!"SUCCEEDED".equals(run.connectionStatus())) {
                     throw new BusinessException("Cần xác nhận kết nối từ Linux client trước.");
                 }
-                input.put("practiceStartedAt", now.toString());
-                input.put("simulatedAlert", !SshPracticeScenario.alertObservations().isEmpty());
-                Instant detected = Instant.now();
-                input.put("systemDetectedAt", detected.toString());
-                input.put("systemDetectionMillis", Duration.between(now, detected).toMillis());
+                if (!input.hasNonNull("practiceStartedAt")) {
+                    input.put("practiceStartedAt", now.toString());
+                }
+                var detection = observations.ingestPractice(run.labSessionId(), id, now);
+                input.put("simulationPublishedAt", now.toString());
+                input.put("simulatedAlert", detection.isPresent());
+                detection.ifPresent(result -> {
+                    input.put("simulatedAlertId", result.alertId());
+                    input.put("systemDetectedAt", result.detectedAt().toString());
+                    input.put("systemDetectionMillis", Duration.between(now, result.detectedAt()).toMillis());
+                });
                 next = "ACTIVE";
             }
             case "ACKNOWLEDGE" -> {
@@ -252,6 +256,7 @@ public class SshPracticeService {
             }
             case "SUBMIT_REPORT" -> {
                 requireRole(role, "BLUE");
+                if ("SUBMITTED".equals(run.state())) return view(run, role);
                 requireState(run, "RECOVERY");
                 if (request.recovered() == null) {
                     throw new IllegalArgumentException("Chọn kết luận phục hồi dựa trên log.");
@@ -262,19 +267,69 @@ public class SshPracticeService {
                 input.put("reportSubmittedAt", now.toString());
                 input.put("closureProposedAt", now.toString());
                 input.put("reportVersion", input.path("reportVersion").asInt(0) + 1);
+                input.put("submittedBy", actor);
+                input.remove("returnReason");
+                var snapshot = json.createObjectNode();
+                snapshot.put("exerciseId", run.exerciseId());
+                snapshot.put("assessmentId", run.assessmentId());
+                snapshot.put("teamId", run.blueTeamId());
+                snapshot.put("labSessionId", run.labSessionId().toString());
+                snapshot.set("submission", input.deepCopy());
+                runs.history(id, actor, "SUBMISSION_SNAPSHOT", snapshot.toString());
                 next = "SUBMITTED";
+            }
+            case "RETURN_SUBMISSION" -> {
+                requireRole(role, "INSTRUCTOR");
+                requireState(run, "SUBMITTED");
+                note = required(request.note(), 3, 4000);
+                input.put("returnReason", note);
+                input.remove("confirmedReview");
+                next = "RECOVERY";
+            }
+            case "CONFIRM_REVIEW" -> {
+                requireRole(role, "INSTRUCTOR");
+                requireState(run, "SUBMITTED");
+                if (request.analysisAccepted() == null || request.reportAccepted() == null) {
+                    throw new IllegalArgumentException("Đánh giá cả phân tích và báo cáo.");
+                }
+                note = required(request.note(), 3, 4000);
+                var confirmation = input.putObject("confirmedReview");
+                confirmation.put("note", note);
+                confirmation.put("analysisAccepted", request.analysisAccepted());
+                confirmation.put("reportAccepted", request.reportAccepted());
+                confirmation.put("version", input.path("reportVersion").asInt());
+            }
+            case "PUBLISH_REVIEW" -> {
+                requireRole(role, "INSTRUCTOR");
+                if ("REVIEWED".equals(run.state())) return view(run, role);
+                requireState(run, "SUBMITTED");
+                var confirmation = input.path("confirmedReview");
+                if (!confirmation.isObject() || confirmation.path("version").asInt() != input.path("reportVersion").asInt()) {
+                    throw new BusinessException("Xác nhận kết quả của phiên bản hiện tại trước khi công bố.");
+                }
+                note = confirmation.path("note").asString();
+                input.put("review", note);
+                score = publisher.publish(run, input, actor,
+                        criteriaMet(run.id(), input, confirmation.path("analysisAccepted").asBoolean(),
+                                confirmation.path("reportAccepted").asBoolean()));
+                input.put("assessmentReviewedAt", now.toString());
+                input.remove("confirmedReview");
+                next = "REVIEWED";
             }
             case "REVIEW" -> {
                 requireRole(role, "INSTRUCTOR");
                 if ("REVIEWED".equals(run.state())) return view(run, role);
                 requireState(run, "SUBMITTED");
+                if (input.hasNonNull("submittedBy")) {
+                    throw new BusinessException("Xác nhận kết quả trước khi công bố bài nộp.");
+                }
                 if (request.analysisAccepted() == null || request.reportAccepted() == null) {
                     throw new IllegalArgumentException("Đánh giá cả phân tích và báo cáo.");
                 }
                 note = required(request.note(), 3, 4000);
                 input.put("review", note);
                 score = publisher.publish(run, input, actor,
-                        criteriaMet(input, request.analysisAccepted(), request.reportAccepted()));
+                        criteriaMet(run.id(), input, request.analysisAccepted(), request.reportAccepted()));
                 input.put("assessmentReviewedAt", now.toString());
                 next = "REVIEWED";
             }
@@ -311,24 +366,32 @@ public class SshPracticeService {
         }
     }
 
-    private View view(Run run, String role) {
+    private SshPracticeResponse view(Run run, String role) {
         var lab = labs.status(run.exerciseId());
         boolean ready = lab != null && lab.id().equals(run.labSessionId()) && lab.ready();
         boolean reviewAccess = !"RED".equals(role);
         boolean released = !"APPROVED".equals(run.state()) && reviewAccess;
         boolean recoveryReleased = Set.of("RECOVERY", "SUBMITTED", "REVIEWED").contains(run.state()) && reviewAccess;
-        return new View(run.id(), run.exerciseId(), run.assessmentId(), run.redTeamId(), run.blueTeamId(), role,
-                run.state(), ready, run.connectionStatus(), run.version(), "ubuntu-target",
-                reviewAccess ? SshPracticeScenario.CRITERIA : List.of(),
+        return new SshPracticeResponse(run.id(), run.exerciseId(), run.assessmentId(), run.redTeamId(), run.blueTeamId(), role,
+                run.state(), ready, "RED".equals(role) && canStartScenario(run), run.connectionStatus(), run.version(), "ubuntu-target",
+                reviewAccess ? assessmentResults.findByAssessment_IdOrderByDefensiveTask_SequenceOrderAsc(run.assessmentId()).stream()
+                        .map(result -> SshPracticeTaskResponse.from(result.getDefensiveTask())).toList() : List.of(),
                 released ? SshPracticeScenario.OBSERVATIONS : List.of(),
                 recoveryReleased ? SshPracticeScenario.RECOVERY : List.of(),
                 released && run.submission().path("simulatedAlert").asBoolean(false),
                 reviewAccess ? run.submission() : null, reviewAccess ? run.score() : null,
-                reviewAccess ? runs.history(run.id()) : runs.history(run.id()).stream()
+                reviewAccess ? runs.history(run.id()).stream().filter(entry -> !"SUBMISSION_SNAPSHOT".equals(entry.action())).toList()
+                        : runs.history(run.id()).stream()
                         .filter(entry -> Set.of("CHECK_CONNECTION", "CONNECTION_CONFIRMED", "CONNECTION_FAILED",
                                 "CONNECTION_TIMEOUT", "START_SCENARIO").contains(entry.action())).toList(),
                 reviewAccess ? runs.observedEvents(run.labSessionId(), run.exerciseId()) : List.of(),
                 reviewAccess ? metrics(run.submission()) : null);
+    }
+
+    private static boolean canStartScenario(Run run) {
+        return "APPROVED".equals(run.state()) || ("ACTIVE".equals(run.state())
+                && !run.submission().hasNonNull("simulationPublishedAt")
+                && !run.submission().hasNonNull("simulatedAlertId"));
     }
 
     private Run lock(UUID id) {
@@ -385,8 +448,8 @@ public class SshPracticeService {
         }
     }
 
-    private static Metrics metrics(JsonNode input) {
-        return new Metrics(input.hasNonNull("systemDetectionMillis") ? input.path("systemDetectionMillis").asLong() : null,
+    private static SshPracticeMetricsResponse metrics(JsonNode input) {
+        return new SshPracticeMetricsResponse(input.hasNonNull("systemDetectionMillis") ? input.path("systemDetectionMillis").asLong() : null,
                 elapsed(input, "practiceStartedAt", "studentAcknowledgedAt"),
                 elapsed(input, "studentAcknowledgedAt", "responseProposedAt"),
                 elapsed(input, "responseApprovedAt", "simulatedResponseCompletedAt"));
@@ -398,10 +461,12 @@ public class SshPracticeService {
                 Instant.parse(input.path(to).asString())).toSeconds();
     }
 
-    private static boolean[] criteriaMet(ObjectNode input, boolean analysisAccepted, boolean reportAccepted) {
+    private boolean[] criteriaMet(UUID runId, ObjectNode input, boolean analysisAccepted, boolean reportAccepted) {
         var selection = new HashSet<Long>();
         input.path("observationIds").forEach(node -> selection.add(node.asLong()));
-        Set<Long> correlated = SshPracticeScenario.alertObservations();
+        Set<Long> correlated = input.hasNonNull("simulatedAlertId")
+                ? Set.copyOf(observations.practiceObservationIds(input.path("simulatedAlertId").asLong(), runId))
+                : SshPracticeScenario.alertObservations();
         var reference = SshPracticeScenario.OBSERVATIONS.stream().filter(row -> correlated.contains(row.id()))
                 .findFirst().orElseThrow();
         return new boolean[] {

@@ -16,7 +16,7 @@ import com.cyberrange.backend.evidence.entity.Evidence;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import tools.jackson.databind.JsonNode;
+import com.cyberrange.backend.scoring.engine.ScoringEngine;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,8 +26,6 @@ import java.util.Map;
 @Service
 @Transactional
 public class AutomatedScoringService {
-
-    private static final String RULE_TYPE = "EVIDENCE_FIELD_MATCH";
 
     private final AssessmentRepository assessmentRepository;
     private final AssessmentResultRepository assessmentResultRepository;
@@ -55,7 +53,7 @@ public class AutomatedScoringService {
         }
 
         Assessment assessment = assessmentRepository
-                .findWithExerciseAndTeamById(assessmentId)
+                .findByIdForUpdate(assessmentId)
                 .orElseThrow(() -> new BusinessException(
                         "Assessment not found"
                 ));
@@ -66,6 +64,7 @@ public class AutomatedScoringService {
                                 assessmentId
                         );
 
+        boolean published = "REVIEWED".equals(assessment.getReviewStatus());
         int automatedCount = 0;
         int manualSkippedCount = 0;
         int unconfiguredCount = 0;
@@ -103,6 +102,11 @@ public class AutomatedScoringService {
 
             for (AssessmentScore score : scores) {
 
+                if (published) {
+                    evaluations.add(toEvaluation(score, "PUBLISHED"));
+                    continue;
+                }
+
                 // Never overwrite manually assigned scores.
                 if ("MANUAL".equals(score.getScoreSource())) {
                     manualSkippedCount++;
@@ -132,10 +136,10 @@ public class AutomatedScoringService {
                     continue;
                 }
 
-                validateRule(rule);
+                ScoringEngine.validateRule(rule);
 
                 BigDecimal ruleScore =
-                        toBigDecimal(rule.get("score"));
+                        ScoringEngine.toBigDecimal(rule.get("score"));
 
                 BigDecimal awardedScore =
                         ruleScore.min(score.getMaxScore());
@@ -146,36 +150,50 @@ public class AutomatedScoringService {
 
                 boolean validTask = !"FAILED".equals(taskStatus)
                         || !SshAssessmentEvaluator.EVIDENCE_TYPE.equals(rule.get("evidenceType"));
-                boolean matched = validTask && links.stream()
+                var evidenceItems = links.stream()
                         .map(AssessmentScoreEvidence::getEvidence)
-                        .anyMatch(evidence ->
-                                matchesEvidence(
-                                        evidence,
-                                        assessment,
-                                        rule
-                                )
-                        );
+                        .filter(evidence -> eligibleEvidence(evidence, assessment))
+                        .toList();
+                BigDecimal ratio = validTask ? evidenceItems.stream()
+                        .map(evidence -> ScoringEngine.evidenceRatio(evidence.getEvidenceType(), evidence.getData(), rule))
+                        .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO) : BigDecimal.ZERO;
+                boolean matched = ratio.signum() > 0;
+                String outcome = matched
+                        ? (ratio.compareTo(BigDecimal.ONE) < 0 ? "AUTOMATED_PARTIAL" : "AUTOMATED_MATCH")
+                        : "AUTOMATED_NO_MATCH";
 
                 if (matched) {
                     score.updateAutomatedScore(
-                            awardedScore,
-                            "Automated rule matched verified evidence."
+                            awardedScore.multiply(ratio).setScale(2, java.math.RoundingMode.HALF_UP),
+                            ratio.compareTo(BigDecimal.ONE) < 0 ? "Verified selection partially matched the reference set."
+                                    : "Automated rule matched verified evidence."
                     );
                 } else {
+                    String reason = "No linked verified evidence matched the scoring rule.";
+                    if (validTask && "TIME_THRESHOLD".equals(rule.get("ruleType"))) {
+                        var outcomes = evidenceItems.stream()
+                                .filter(evidence -> rule.get("evidenceType").equals(evidence.getEvidenceType()))
+                                .map(evidence -> ScoringEngine.timeOutcome(evidence.getData(), rule)).toList();
+                        if (outcomes.contains("TIME_THRESHOLD_EXCEEDED")) {
+                            outcome = "TIME_THRESHOLD_EXCEEDED";
+                            reason = "Verified duration exceeded the configured threshold.";
+                        } else if (outcomes.contains("TIME_INVALID")) {
+                            outcome = "TIME_INVALID";
+                            reason = "Verified Evidence contains an invalid duration.";
+                        } else {
+                            outcome = "TIME_NOT_MEASURED";
+                            reason = "No verified measured duration is available.";
+                        }
+                    }
                     score.updateAutomatedScore(
                             BigDecimal.ZERO,
-                            "No linked verified evidence matched the scoring rule."
+                            reason
                     );
                 }
 
                 automatedCount++;
 
-                evaluations.add(toEvaluation(
-                        score,
-                        matched
-                                ? "AUTOMATED_MATCH"
-                                : "AUTOMATED_NO_MATCH"
-                ));
+                evaluations.add(toEvaluation(score, outcome));
             }
         }
 
@@ -184,7 +202,11 @@ public class AutomatedScoringService {
                 assessmentScoreRepository
                         .sumAwardedScoreByAssessmentId(assessmentId);
 
-        assessment.updateTotalScore(totalScore);
+        if (published) {
+            totalScore = assessment.getTotalScore();
+        } else {
+            assessment.updateTotalScore(totalScore);
+        }
 
         return new AutomatedScoringResponse(
                 assessment.getId(),
@@ -197,10 +219,9 @@ public class AutomatedScoringService {
         );
     }
 
-    private boolean matchesEvidence(
+    private boolean eligibleEvidence(
             Evidence evidence,
-            Assessment assessment,
-            Map<String, Object> rule
+            Assessment assessment
     ) {
         if (evidence == null
                 || !"VERIFIED".equals(evidence.getVerificationStatus())) {
@@ -219,122 +240,7 @@ public class AutomatedScoringService {
             return false;
         }
 
-        Object expectedEvidenceType = rule.get("evidenceType");
-
-        if (!(expectedEvidenceType instanceof String evidenceType)
-                || !evidenceType.equals(evidence.getEvidenceType())) {
-            return false;
-        }
-
-        JsonNode data = evidence.getData();
-
-        if (data == null || !data.isObject()) {
-            return false;
-        }
-
-        Object rawConditions = rule.get("conditions");
-
-        if (!(rawConditions instanceof Map<?, ?> conditions)
-                || conditions.isEmpty()) {
-            return false;
-        }
-
-        // Every configured condition must match.
-        for (Map.Entry<?, ?> condition : conditions.entrySet()) {
-
-            if (!(condition.getKey() instanceof String fieldName)) {
-                return false;
-            }
-
-            JsonNode actualValue = data.get(fieldName);
-
-            if (actualValue == null
-                    || actualValue.isNull()
-                    || !jsonValueMatches(
-                    actualValue,
-                    condition.getValue()
-            )) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private boolean jsonValueMatches(
-            JsonNode actual,
-            Object expected
-    ) {
-        if (expected instanceof Number number) {
-            if (!actual.isNumber()) {
-                return false;
-            }
-
-            return actual.decimalValue().compareTo(
-                    new BigDecimal(number.toString())
-            ) == 0;
-        }
-
-        if (expected instanceof Boolean bool) {
-            return actual.isBoolean()
-                    && actual.booleanValue() == bool;
-        }
-
-        if (expected instanceof String text) {
-            return actual.isString()
-                    && actual.stringValue().equals(text);
-        }
-
-        return false;
-    }
-
-    static void validateRule(Map<String, Object> rule) {
-
-        if (!RULE_TYPE.equals(rule.get("ruleType"))) {
-            throw new BusinessException(
-                    "Unsupported scoring rule type"
-            );
-        }
-
-        if (!(rule.get("evidenceType") instanceof String evidenceType)
-                || evidenceType.isBlank()) {
-            throw new BusinessException(
-                    "Scoring rule must define evidenceType"
-            );
-        }
-
-        if (!(rule.get("conditions") instanceof Map<?, ?> conditions)
-                || conditions.isEmpty()) {
-            throw new BusinessException(
-                    "Scoring rule must define non-empty conditions"
-            );
-        }
-
-        BigDecimal score = toBigDecimal(rule.get("score"));
-
-        if (score.compareTo(BigDecimal.ZERO) < 0) {
-            throw new BusinessException(
-                    "Scoring rule score cannot be negative"
-            );
-        }
-    }
-
-    static BigDecimal toBigDecimal(Object value) {
-
-        if (!(value instanceof Number)
-                && !(value instanceof String)) {
-            throw new BusinessException(
-                    "Scoring rule score must be numeric"
-            );
-        }
-
-        try {
-            return new BigDecimal(value.toString());
-        } catch (NumberFormatException exception) {
-            throw new BusinessException(
-                    "Invalid scoring rule score"
-            );
-        }
+        return evidence.getSshAssessmentId() == null || assessment.getId().equals(evidence.getSshAssessmentId());
     }
 
     private AutomatedScoringResponse.ScoreEvaluation toEvaluation(

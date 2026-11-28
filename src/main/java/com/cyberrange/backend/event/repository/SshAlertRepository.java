@@ -58,6 +58,13 @@ public class SshAlertRepository {
                 """).param("id", id).query(Long.class).list();
     }
 
+    public boolean isSimulated(long alertId) {
+        return db.sql("""
+                SELECT EXISTS (SELECT 1 FROM security_alert_events l JOIN events e ON e.id = l.event_id
+                               WHERE l.alert_id = :id AND e.source = 'SSH_PRACTICE')
+                """).param("id", alertId).query(Boolean.class).single();
+    }
+
     public List<Action> history(long id) {
         return db.sql("SELECT * FROM ssh_response_actions WHERE alert_id = :id ORDER BY id")
                 .param("id", id).query(Action.class).list();

@@ -1,5 +1,7 @@
 package com.cyberrange.backend.assessment.service;
 
+import com.cyberrange.backend.scoring.engine.ScoringEngine;
+
 import com.cyberrange.backend.assessment.dto.AssessmentResponse;
 import com.cyberrange.backend.assessment.dto.AssessmentResultResponse;
 import com.cyberrange.backend.assessment.dto.AssessmentScoreResponse;
@@ -278,8 +280,8 @@ public class AssessmentService {
             return false;
         }
         try {
-            AutomatedScoringService.validateRule(rule);
-            return AutomatedScoringService.toBigDecimal(rule.get("score")).compareTo(criterion.getMaxScore()) <= 0;
+            ScoringEngine.validateRule(rule);
+            return ScoringEngine.toBigDecimal(rule.get("score")).compareTo(criterion.getMaxScore()) <= 0;
         } catch (BusinessException exception) {
             return false;
         }

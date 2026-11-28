@@ -15,6 +15,8 @@ interface Observation {
 }
 
 interface ObservedEvent {
+    provenance?: string
+    alertId?: number
     id: number
     eventType: string
     severity?: string
@@ -45,9 +47,10 @@ interface Practice {
     role: 'INSTRUCTOR' | 'RED' | 'BLUE' | 'WHITE'
     state: 'APPROVED' | 'ACTIVE' | 'PROPOSED' | 'RECOVERY' | 'SUBMITTED' | 'REVIEWED'
     ready: boolean
+    canStartScenario: boolean
     connectionStatus: 'NONE' | 'QUEUED' | 'CHECKING' | 'SUCCEEDED' | 'FAILED'
     target: string
-    criteria: Array<{ name: string; maximum: number }>
+    criteria: Array<{ taskId: number; name: string; maximum: number }>
     observations: Observation[]
     recovery: Observation[]
     alert: boolean
@@ -65,6 +68,8 @@ interface Practice {
         impact?: string
         recovered?: boolean
         reportVersion?: number
+        returnReason?: string
+        confirmedReview?: { version: number }
         review?: string
         marks?: Array<{ name: string; points: number; maximum: number; reason: string }>
     }
@@ -244,10 +249,20 @@ function PracticeCard({ run, update }: { run: Practice; update: (value: Practice
     const [pending, setPending] = useState(false)
     const [feedback, setFeedback] = useState('')
     const studentBlue = run.role === 'BLUE'
+    const canInvestigate = studentBlue && run.state === 'ACTIVE' && !!run.submission?.studentAcknowledgedAt
+    const selectedObservations = selected.filter((id) => run.observations.some((row) => row.id === id))
+    const investigationIssues = [
+        selectedObservations.length === 0 && 'Chọn ít nhất một bản ghi liên quan.',
+        !account.trim() && 'Nhập tài khoản bị ảnh hưởng.',
+        !target.trim() && 'Nhập máy chủ bị ảnh hưởng.',
+        !source.trim() && 'Nhập IP nguồn nghi vấn.',
+        impact.trim().length < 3 && 'Nhập phạm vi ảnh hưởng (ít nhất 3 ký tự).',
+        analysis.trim().length < 10 && 'Phân tích log phải có ít nhất 10 ký tự.',
+    ].filter(Boolean)
     const instructor = run.role === 'INSTRUCTOR'
 
     const act = async (action: string, fields: Record<string, unknown> = {}) => {
-        if (action === 'REVIEW' && !window.confirm('Công bố điểm bài thực hành vào Assessment của đội?')) return
+        if (action === 'PUBLISH_REVIEW' && !window.confirm('Công bố điểm bài thực hành vào Assessment của đội?')) return
         setPending(true)
         setFeedback('')
         try {
@@ -288,8 +303,9 @@ function PracticeCard({ run, update }: { run: Practice; update: (value: Practice
                     <div className="flex flex-wrap gap-2">
                         <button className={button} disabled={pending || !run.ready || run.connectionStatus !== 'NONE'}
                             onClick={() => void act('CHECK_CONNECTION')}>Kiểm tra kết nối</button>
-                        <button className={button} disabled={pending || !run.ready || run.state !== 'APPROVED' || run.connectionStatus !== 'SUCCEEDED'}
-                            onClick={() => void act('START_SCENARIO')}>Bắt đầu tình huống mô phỏng</button>
+                        <button className={button} disabled={pending || !run.ready || !run.canStartScenario || run.connectionStatus !== 'SUCCEEDED'}
+                            onClick={() => void act('START_SCENARIO')}>{run.state === 'ACTIVE' && run.canStartScenario
+                            ? 'Phát hành Event cho lượt hiện tại' : 'Bắt đầu tình huống mô phỏng'}</button>
                     </div>
                     {run.state !== 'APPROVED' && <p role="status">Tình huống đã phát hành cho đội BLUE. Theo dõi tiến độ ở trạng thái phía trên.</p>}
                 </div>
@@ -304,14 +320,15 @@ function PracticeCard({ run, update }: { run: Practice; update: (value: Practice
                         <div><dt>Thời gian phản ứng mô phỏng sau duyệt</dt><dd>{metric(run.metrics.simulatedResponseSeconds, 'giây')}</dd></div>
                     </dl>}
                     <details>
-                        <summary className="cursor-pointer font-medium">Defensive Tasks · 100 điểm</summary>
+                        <summary className="cursor-pointer font-medium">Defensive Tasks · {run.criteria.reduce((total, item) => total + item.maximum, 0)} điểm</summary>
+                        {run.criteria.length === 0 && <p className="mt-2 text-sm">Assessment chưa có nhiệm vụ được cấu hình.</p>}
                         <ol className="ml-5 mt-2 list-decimal text-sm">
-                            {run.criteria.map((criterion) => <li key={criterion.name}>{criterion.name} · {criterion.maximum} điểm</li>)}
+                            {run.criteria.map((criterion) => <li key={criterion.taskId}>{criterion.name} · {criterion.maximum} điểm</li>)}
                         </ol>
                     </details>
                     {run.alert && <p className="rounded-md bg-amber-50 p-3 text-sm">Alert mô phỏng · Phát hiện cụm xác thực SSH thất bại. Đối chiếu các bản ghi để tìm những lần có liên quan.</p>}
                     {run.observations.length > 0 && <ObservationTable rows={run.observations} selected={selected}
-                        toggle={studentBlue && run.state === 'ACTIVE' && run.submission?.studentAcknowledgedAt ? toggle : undefined} />}
+                        toggle={canInvestigate ? toggle : undefined} />}
                     {studentBlue && run.state === 'ACTIVE' && run.alert && !run.submission?.studentAcknowledgedAt && (
                         <button className={button} disabled={pending} onClick={() => void act('ACKNOWLEDGE')}>
                             Xác nhận đã nhận diện sự cố
@@ -324,8 +341,13 @@ function PracticeCard({ run, update }: { run: Practice; update: (value: Practice
                             <label className="block">IP nguồn nghi vấn<input className={input} value={source} onChange={(e) => setSource(e.target.value)} /></label>
                             <label className="block">Phạm vi ảnh hưởng<textarea className={input} value={impact} onChange={(e) => setImpact(e.target.value)} /></label>
                             <label className="block">Phân tích log<textarea className={input} value={analysis} onChange={(e) => setAnalysis(e.target.value)} /></label>
-                            <button className={button} disabled={pending || selected.length === 0 || !account.trim() || !target.trim() || !source.trim() || impact.trim().length < 3 || analysis.trim().length < 10}
-                                onClick={() => void act('SAVE_INVESTIGATION', { observationIds: selected, account, target, source, impact, note: analysis })}>Lưu điều tra</button>
+                            {investigationIssues.length > 0 && (
+                                <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                                    {investigationIssues.map((issue) => <li key={String(issue)}>{issue}</li>)}
+                                </ul>
+                            )}
+                            <button className={button} disabled={pending || investigationIssues.length > 0}
+                                onClick={() => void act('SAVE_INVESTIGATION', { observationIds: selectedObservations, account, target, source, impact, note: analysis })}>Lưu điều tra</button>
                             <label className="block">Đề xuất phản ứng<textarea className={input} value={proposal} onChange={(e) => setProposal(e.target.value)} /></label>
                             <button className={button} disabled={pending || !run.submission?.analysis || proposal.trim().length < 10}
                                 onClick={() => void act('PROPOSE_RESPONSE', { note: proposal })}>Gửi đề xuất</button>
@@ -372,6 +394,7 @@ function PracticeCard({ run, update }: { run: Practice; update: (value: Practice
                             </div>
                         </div>
                     )}
+                    {run.submission?.returnReason && <p role="status">Yêu cầu bổ sung · {run.submission.returnReason}</p>}
                     {run.submission?.reportVersion && (
                         <details>
                             <summary className="cursor-pointer font-medium">Incident Report · Phiên bản {run.submission.reportVersion}</summary>
@@ -390,7 +413,12 @@ function PracticeCard({ run, update }: { run: Practice; update: (value: Practice
                             <ReviewSelect label="Báo cáo" value={reportResult} change={setReportResult} />
                             <label className="block">Nhận xét bài nộp<textarea className={input} value={review} onChange={(e) => setReview(e.target.value)} /></label>
                             <button className={button} disabled={pending || !analysisResult || !reportResult || review.trim().length < 3}
-                                onClick={() => void act('REVIEW', { note: review, analysisAccepted: analysisResult === 'yes', reportAccepted: reportResult === 'yes' })}>Duyệt điểm thực hành</button>
+                                onClick={() => void act('CONFIRM_REVIEW', { note: review, analysisAccepted: analysisResult === 'yes', reportAccepted: reportResult === 'yes' })}>Xác nhận kết quả</button>
+                            <button type="button" className={button}
+                                disabled={pending || run.submission?.confirmedReview?.version !== run.submission?.reportVersion || !run.submission?.confirmedReview}
+                                onClick={() => void act('PUBLISH_REVIEW')}>Công bố điểm</button>
+                            <button type="button" className={button} disabled={pending || review.trim().length < 3}
+                                onClick={() => void act('RETURN_SUBMISSION', { note: review })}>Yêu cầu bổ sung</button>
                         </div>
                     )}
                     {run.state === 'REVIEWED' && (
@@ -434,29 +462,54 @@ function PracticeEventExplorer({ events }: { events: ObservedEvent[] }) {
     const [filter, setFilter] = useState('')
     const [outcome, setOutcome] = useState('')
     const [from, setFrom] = useState('')
+    const [severity, setSeverity] = useState('')
+    const [eventType, setEventType] = useState('')
+    const [alertId, setAlertId] = useState('')
+    const [page, setPage] = useState(0)
     const normalized = filter.trim().toLowerCase()
     const filtered = events.filter((event) =>
         (!from || new Date(event.eventTimestamp).getTime() >= new Date(from).getTime())
         && (!outcome || event.outcome === outcome)
-        && (!normalized || [event.account, event.sourceAddress, event.target].some((value) => value?.toLowerCase().includes(normalized))),
+        && (!severity || event.severity === severity)
+        && (!eventType || event.eventType === eventType)
+        && (!alertId || String(event.alertId) === alertId)
+        && (!normalized || [String(event.id), event.account, event.sourceAddress, event.target].some((value) => value?.toLowerCase().includes(normalized))),
     )
+    const pageSize = 15
+    const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1)
+    const currentPage = Math.min(page, lastPage)
     return (
         <details>
-            <summary className="cursor-pointer font-medium">Event SSH quan sát thật ({events.length})</summary>
+            <summary className="cursor-pointer font-medium">Nhật ký Event SSH ({events.length})</summary>
             <div className="my-2 grid gap-2 text-sm sm:grid-cols-3">
                 <label>Tài khoản, nguồn hoặc máy chủ<input className={input} value={filter} onChange={(e) => setFilter(e.target.value)} /></label>
                 <label>Kết quả<select className={input} value={outcome} onChange={(e) => setOutcome(e.target.value)}>
                     <option value="">Tất cả</option><option value="SUCCESS">Thành công</option><option value="FAILURE">Thất bại</option>
                 </select></label>
                 <label>Từ thời điểm<input className={input} type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+                <label>Mức độ<select className={input} value={severity} onChange={(e) => { setSeverity(e.target.value); setPage(0) }}>
+                    <option value="">Tất cả</option>{[...new Set(events.map((event) => event.severity).filter(Boolean))].map((value) => <option key={value}>{value}</option>)}
+                </select></label>
+                <label>Loại Event<select className={input} value={eventType} onChange={(e) => { setEventType(e.target.value); setPage(0) }}>
+                    <option value="">Tất cả</option>{[...new Set(events.map((event) => event.eventType))].map((value) => <option key={value}>{value}</option>)}
+                </select></label>
+                <label>Alert<select className={input} value={alertId} onChange={(e) => { setAlertId(e.target.value); setPage(0) }}>
+                    <option value="">Tất cả</option>{[...new Set(events.flatMap((event) => event.alertId ? [event.alertId] : []))].map((value) => <option key={value} value={value}>#{value}</option>)}
+                </select></label>
             </div>
-            {filtered.length === 0 && <p className="text-sm">Chưa có Event thật phù hợp trong phiên Lab.</p>}
-            {filtered.map((event) => (
+            {filtered.length === 0 && <p className="text-sm">Chưa có Event phù hợp trong phiên Lab.</p>}
+            {filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize).map((event) => (
                 <details className="border-b py-2 text-sm" key={event.id}>
                     <summary className="cursor-pointer">#{event.id} · {new Date(event.eventTimestamp).toLocaleString('vi-VN')} · {event.eventType} · {event.severity ?? '—'} · {event.sourceAddress ?? '—'} · {event.account ?? '—'}@{event.target ?? '—'}</summary>
-                    <pre className="overflow-auto whitespace-pre-wrap">{event.raw ?? 'Chưa có log gốc.'}</pre>
+                    <p>{event.provenance === 'SIMULATED_PRACTICE' ? 'Mô phỏng' : 'Quan sát thực tế'} · {event.outcome ?? '—'}{event.alertId ? ` · Alert #${event.alertId}` : ''}</p>
+                    <pre className="overflow-auto whitespace-pre-wrap">{event.raw ?? 'Nhật ký gốc được giới hạn quyền hiển thị.'}</pre>
                 </details>
             ))}
+            {lastPage > 0 && <div className="flex items-center gap-3 text-sm">
+                <button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Trang trước</button>
+                <span>Trang {currentPage + 1}/{lastPage + 1}</span>
+                <button type="button" disabled={currentPage === lastPage} onClick={() => setPage(currentPage + 1)}>Trang sau</button>
+            </div>}
         </details>
     )
 }
@@ -483,20 +536,22 @@ function ObservationTable({ rows, selected, toggle, recovery = false }: {
         <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
                 <caption className="text-left font-medium">{recovery ? 'Log phục hồi mô phỏng' : 'Authentication Events mô phỏng'}</caption>
-                <thead><tr><th>Bản ghi</th><th>Mốc</th><th>Nguồn</th><th>Tài khoản</th><th>Target</th><th>Kết quả</th></tr></thead>
+                <thead><tr>{toggle && <th scope="col">Chọn</th>}<th>Bản ghi</th><th>Mốc thời gian</th><th>Nguồn</th><th>Tài khoản</th><th>Target</th><th>Kết quả</th></tr></thead>
                 <tbody>
                     {rows.map((row) => (
-                        <tr className="border-b border-slate-100" key={row.id}>
-                            <td>
-                                {toggle && <input aria-label={`Chọn bản ghi ${row.id}`} type="checkbox"
-                                    checked={selected.includes(row.id)} onChange={() => toggle(row.id)} />}{' '}#{row.id}
-                            </td>
+                        <tr className={`border-b border-slate-100 ${selected.includes(row.id) ? 'bg-sky-50' : ''}`} key={row.id}>
+                            {toggle && <td className="py-2 pr-3">
+                                <input className="h-4 w-4 cursor-pointer accent-blue-700" aria-label={`Chọn bản ghi ${row.id}`} type="checkbox"
+                                    checked={selected.includes(row.id)} onChange={() => toggle(row.id)} />
+                            </td>}
+                            <td>#{row.id}</td>
                             <td>{row.second} giây</td><td>{row.source}</td><td>{row.account}</td><td>{row.target}</td>
                             <td>{row.outcome === 'SUCCESS' ? 'Thành công' : 'Thất bại'}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
+            {toggle && <p role="status" className="mt-2 text-sm">Đã chọn {rows.filter((row) => selected.includes(row.id)).length} bản ghi.</p>}
         </div>
     )
 }

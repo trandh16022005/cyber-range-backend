@@ -1,3 +1,4 @@
+import ScoreEvidence from './ScoreEvidence'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import {
@@ -324,7 +325,9 @@ function AssessmentDetailPage() {
                             Total Score
                         </p>
                         <p className="mt-1 font-semibold text-slate-900">
-                            {assessment.totalScore}
+                            {assessment.sshWorkflow && assessment.reviewStatus === 'REVIEWED'
+                                ? (assessment.finalScore ?? '—')
+                                : assessment.totalScore}
                         </p>
                     </div>
 
@@ -411,7 +414,7 @@ function AssessmentDetailPage() {
                                 </div>
 
                                 {/* Lifecycle actions: ADMIN / INSTRUCTOR only */}
-                                {canManage && result.status !== 'COMPLETED' && (
+                                {canManage && !assessment.sshWorkflow && result.status !== 'COMPLETED' && (
                                     <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
                                         {result.status === 'PENDING' && (
                                             <button
@@ -611,6 +614,7 @@ function AssessmentDetailPage() {
 
                                                         <td className="px-4 py-3 text-slate-600">
                                                             {score.reason ?? '—'}
+                                                            {(canManage || (role === 'STUDENT' && assessment.sshWorkflow)) && <ScoreEvidence scoreId={score.id} />}
                                                         </td>
                                                     </tr>
                                                 ))}

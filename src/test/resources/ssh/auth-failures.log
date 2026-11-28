@@ -1,0 +1,7 @@
+# Synthetic OpenSSH-format records written for this repository's defensive detector tests.
+# RFC 3339 markers are rebased by the integration test. 192.0.2.42 is a documentation address.
+2026-01-01T00:00:00Z ubuntu-target sshd[101]: Failed publickey for lab-user from 192.0.2.42 port 40001 ssh2
+2026-01-01T00:00:01Z ubuntu-target sshd[102]: Failed publickey for lab-user from 192.0.2.42 port 40002 ssh2
+2026-01-01T00:00:02Z ubuntu-target sshd[103]: Failed publickey for lab-user from 192.0.2.42 port 40003 ssh2
+2026-01-01T00:00:03Z ubuntu-target sshd[104]: Failed publickey for lab-user from 192.0.2.42 port 40004 ssh2
+2026-01-01T00:00:04Z ubuntu-target sshd[105]: Failed publickey for lab-user from 192.0.2.42 port 40005 ssh2

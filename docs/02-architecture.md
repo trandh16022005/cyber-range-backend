@@ -1043,3 +1043,32 @@ Kiến trúc này là cơ sở cho các bước thiết kế tiếp theo:
      ↓
 07-project-structure-coding-convention.md
 ```
+
+
+## SSH Lab và bài thực hành có hướng dẫn
+
+Windows chạy React/Vite, Spring Boot, PostgreSQL và Lab runner. Docker chỉ chạy client, Ubuntu Target và Collector trên mạng nội bộ theo phiên. Runner giữ quyền điều phối Compose trên host. Web API dùng JWT cho người dùng và credential Lab riêng cho runner hoặc Collector.
+
+```mermaid
+sequenceDiagram
+    participant I as INSTRUCTOR
+    participant R as RED
+    participant B as BLUE
+    participant W as Web API
+    participant D as Docker Lab
+    participant P as PostgreSQL
+    I->>W: Khởi động Lab và duyệt lượt
+    W->>D: Runner điều phối phiên và kiểm tra sức khỏe
+    R->>W: Yêu cầu kiểm tra kết nối Lab
+    W->>D: Runner thực hiện xác thực được cấp quyền
+    D->>W: Collector chuyển Event SSH thật
+    W->>P: Lưu Event quan sát
+    R->>W: Phát hành tình huống mô phỏng
+    B->>W: Xác nhận, lưu điều tra và gửi đề xuất
+    I->>W: Duyệt phản ứng mô phỏng
+    B->>W: Xác minh và nộp Incident Report
+    I->>W: Duyệt và công bố điểm
+    W->>P: Lưu lượt, Evidence, Result và Score
+```
+
+`ssh_practice_runs` liên kết đúng một Lab Session với Exercise, Assessment và hai đội. Lịch sử lưu các mốc và người thao tác. Review tạo Evidence có provenance `TRAINING_SIMULATION` và liên kết đến Score thuộc Team Assessment. Event thật tiếp tục vào bảng `events` từ Collector. Dữ liệu quan sát mô phỏng đi theo lượt thực hành có phiên bản.

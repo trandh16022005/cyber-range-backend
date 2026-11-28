@@ -310,20 +310,20 @@ Example:
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/cyber_range_db
-spring.datasource.username=${DB_USERNAME}
-spring.datasource.password=${DB_PASSWORD}
+spring.datasource.username=${DATABASE_USERNAME}
+spring.datasource.password=${DATABASE_PASSWORD}
 
 spring.jpa.hibernate.ddl-auto=none
 ```
 
-Set `DB_USERNAME` and `DB_PASSWORD` in your local environment before starting the application, or use the configuration mechanism already supported by the project.
+Set `DATABASE_USERNAME` and `DATABASE_PASSWORD` in your local environment or use the Windows configuration below.
 
 Important:
 
 - Use your own local database credentials.
 - Never commit database passwords or JWT secrets.
 - Do not use production credentials in development.
-- Keep `spring.jpa.hibernate.ddl-auto=none` because the existing database schema is the source of truth.
+- The managed Windows runtime validates the existing schema at startup.
 - Do not use `create` or `update` to automatically modify the existing schema.
 
 Check the project's existing `application.properties` before replacing configuration. Preserve other required settings, such as JWT configuration and application-specific properties.
@@ -371,6 +371,39 @@ The local API base URL is therefore normally:
 ```text
 http://localhost:8080/api/v1
 ```
+
+### 6.6 Khởi động cả sản phẩm trên Windows
+
+Chuẩn bị Java 21, Python 3, Node.js, Docker Desktop với Linux containers và PostgreSQL. `python.exe`, `node.exe` và `docker.exe` cần có trong `PATH` của PowerShell và IntelliJ. Cài dependencies Frontend một lần với `npm.cmd --prefix frontend ci` từ thư mục gốc. Dùng database hiện có `cyber_range_db`, schema `public`, tại `127.0.0.1:5432`.
+
+Cấp `DATABASE_PASSWORD` và `JWT_SECRET` một lần qua biến môi trường Windows hoặc trong tệp `%LOCALAPPDATA%\CyberRange\application.properties` của tài khoản đang chạy. Với tệp properties, điền giá trị riêng của bạn:
+
+```properties
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=<mat-khau-PostgreSQL>
+JWT_SECRET=<khoa-ky-JWT-hien-co>
+```
+
+Giữ tệp trong thư mục riêng của tài khoản Windows, giới hạn quyền đọc và giữ ngoài repository. Tệp này dùng định dạng Java properties. Nếu mật khẩu có dấu gạch chéo ngược, dùng `\\` trong tệp hoặc truyền giá trị gốc qua biến môi trường. Khóa JWT cần là Base64 chứa ít nhất 32 byte sau giải mã. Nếu mới thay `PATH` hoặc biến môi trường Windows, mở lại IntelliJ để nhận giá trị mới. Backend tự tạo hai Service Token và cấp chúng cho Runner mỗi lần khởi động.
+
+Bật PostgreSQL và Docker Desktop. Trong PowerShell 5.1 tại thư mục gốc, chạy:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Trong IntelliJ, có thể chạy `CyberRangeBackendApplication` với **Working directory** là thư mục gốc và JDK 21. Khi log hiện `Runner authenticated with Backend` và `Frontend ready`, mở [Cyber Range](http://127.0.0.1:5173). Backend lắng nghe trên `127.0.0.1:8080`. Log Runner và Vite nằm trong `target/runtime-logs/`, đường dẫn cụ thể xuất hiện khi khởi động. Tiến trình cũ khởi động bằng hai tab hoặc launcher PowerShell cần được dừng trước khi chuyển sang quy trình này. Đặt `CYBER_RANGE_MANAGED=false` trong môi trường của tiến trình Java để chạy Backend riêng theo mục trước.
+
+Để dừng bình thường, nhấn `Ctrl+C` hoặc dùng thao tác dừng mềm trong IntelliJ rồi đợi `Managed Runner and Frontend process tree closed`. Nếu Lab đang chạy, Backend yêu cầu Runner dừng đúng phiên và đợi `STOPPED`. Nên dừng Lab trong giao diện trước nếu IntelliJ chỉ có thao tác buộc dừng. Khi JVM bị buộc dừng, Windows thu dọn Runner và Vite, còn lần chạy kế tiếp tiếp tục xử lý trạng thái Lab đã lưu. Docker volume và lịch sử vẫn được giữ.
+
+| Triệu chứng | Cách xử lý |
+|---|---|
+| Cổng `8080` hoặc `5173` bị chiếm | Chạy `Get-NetTCPConnection -State Listen -LocalPort 8080,5173`. Đối chiếu `OwningProcess` và dừng đúng tiến trình đã khởi động. |
+| Thiếu `python.exe`, `node.exe`, `docker.exe` hoặc Vite | Kiểm tra `PATH` và chạy `npm.cmd --prefix frontend ci` nếu thiếu dependencies. |
+| Docker preflight thất bại | Bật Docker Desktop, chọn context local và kiểm tra Docker đang dùng Linux containers. |
+| Hibernate báo thiếu bảng/cột | Kiểm tra đúng database và schema. Đối chiếu [migration SSH Lab](docs/ssh-defensive-workflow.md) và thực hiện theo quy trình sao lưu, phê duyệt. |
+| Runner thoát hoặc báo `403` | Mở `runner.log`, kiểm tra còn Runner thủ công hay không, sau đó khởi động lại cả sản phẩm. |
+| `ERROR · Đang dừng` | Kiểm tra Runner đang chạy và xem log. Làm mới **Lab Workflow** và đợi `STOPPED`. Khi chạy phiên mới, `READY` xác nhận heartbeat và các probe dịch vụ đã đạt. |
 
 ---
 

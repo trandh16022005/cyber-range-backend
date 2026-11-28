@@ -144,7 +144,9 @@ public class AutomatedScoringService {
                         scoreEvidenceRepository
                                 .findByAssessmentScore_Id(score.getId());
 
-                boolean matched = links.stream()
+                boolean validTask = !"FAILED".equals(taskStatus)
+                        || !SshAssessmentEvaluator.EVIDENCE_TYPE.equals(rule.get("evidenceType"));
+                boolean matched = validTask && links.stream()
                         .map(AssessmentScoreEvidence::getEvidence)
                         .anyMatch(evidence ->
                                 matchesEvidence(
@@ -209,6 +211,11 @@ public class AutomatedScoringService {
         if (evidence.getExercise() == null
                 || !assessment.getExercise().getId()
                 .equals(evidence.getExercise().getId())) {
+            return false;
+        }
+
+        if (SshAssessmentEvaluator.EVIDENCE_TYPE.equals(evidence.getEvidenceType())
+                && !assessment.getId().equals(evidence.getSshAssessmentId())) {
             return false;
         }
 
@@ -281,7 +288,7 @@ public class AutomatedScoringService {
         return false;
     }
 
-    private void validateRule(Map<String, Object> rule) {
+    static void validateRule(Map<String, Object> rule) {
 
         if (!RULE_TYPE.equals(rule.get("ruleType"))) {
             throw new BusinessException(
@@ -312,7 +319,7 @@ public class AutomatedScoringService {
         }
     }
 
-    private BigDecimal toBigDecimal(Object value) {
+    static BigDecimal toBigDecimal(Object value) {
 
         if (!(value instanceof Number)
                 && !(value instanceof String)) {

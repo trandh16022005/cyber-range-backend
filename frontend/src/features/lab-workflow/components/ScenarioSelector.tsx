@@ -20,10 +20,14 @@ import type {
 
 interface ScenarioSelectorProps {
     selectedExercise: Exercise | null
+    confirmed: boolean
+    onConfirm: () => void
 }
 
 function ScenarioSelector({
                               selectedExercise,
+                              confirmed,
+                              onConfirm,
                           }: ScenarioSelectorProps) {
     const [scenario, setScenario] = useState<LabScenario | null>(null)
     const [tasks, setTasks] = useState<DefensiveTask[]>([])
@@ -257,6 +261,21 @@ function ScenarioSelector({
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-slate-800">
+                            Tổng điểm tối đa {tasks.reduce((sum, task) => sum + Number(task.maxScore), 0)}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={onConfirm}
+                            disabled={confirmed || tasks.length === 0 || scenario.status !== 'PUBLISHED'
+                                || scenario.name !== 'SSH Security Incident Response'}
+                            className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        >
+                            {confirmed ? 'Đã xác nhận Scenario' : 'Xác nhận Scenario'}
+                        </button>
                     </div>
                 </div>
             ) : null}

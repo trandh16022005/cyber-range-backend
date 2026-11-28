@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -73,13 +74,18 @@ public class AssessmentService {
      * Existing assessments are skipped.
      */
     @Transactional
-    public List<AssessmentResponse> initializeAssessments(
-            Long exerciseId
-    ) {
+    public List<AssessmentResponse> initializeAssessments(Long exerciseId) {
+        return initializeAssessments(exerciseId, null);
+    }
 
+    @Transactional
+    public List<AssessmentResponse> initializeAssessments(Long exerciseId, Long teamId) {
         validateId(exerciseId, "Exercise ID");
+        if (teamId != null) {
+            validateId(teamId, "Team ID");
+        }
 
-        Exercise exercise = exerciseRepository.findById(exerciseId)
+        Exercise exercise = exerciseRepository.findByIdForUpdate(exerciseId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Exercise not found with ID: " + exerciseId
                 ));
@@ -105,6 +111,21 @@ public class AssessmentService {
             blueTeams.putIfAbsent(team.getId(), team);
         }
 
+        Assessment existingSelectedAssessment = null;
+        if (teamId != null) {
+            Team selectedTeam = blueTeams.get(teamId);
+            if (selectedTeam == null) {
+                throw new BusinessException("Team is not a BLUE participant in this Exercise");
+            }
+            existingSelectedAssessment = assessmentRepository.findByExercise_IdAndTeam_Id(exerciseId, teamId).orElse(null);
+            if (existingSelectedAssessment == null && !List.of("CREATED", "READY").contains(exercise.getStatus())) {
+                throw new BusinessException("Exercise must be CREATED or READY to initialize a Team Assessment");
+            }
+
+            blueTeams.clear();
+            blueTeams.put(teamId, selectedTeam);
+        }
+
         if (blueTeams.isEmpty()) {
             return List.of();
         }
@@ -118,7 +139,7 @@ public class AssessmentService {
                         ))
                 .toList();
 
-        if (teamsToAssess.isEmpty()) {
+        if (teamsToAssess.isEmpty() && existingSelectedAssessment == null) {
             return List.of();
         }
 
@@ -159,7 +180,16 @@ public class AssessmentService {
                 );
             }
 
+            if (teamId != null && !describeCriteria(task, criteria).configured()) {
+                throw new BusinessException("Assessment criteria or scoring rule is invalid. Task ID: " + task.getId());
+            }
+
             criteriaByTask.put(task.getId(), criteria);
+        }
+
+        if (existingSelectedAssessment != null) {
+            validateExistingResults(existingSelectedAssessment, criteriaByTask);
+            return List.of(toAssessmentResponse(existingSelectedAssessment));
         }
 
         List<AssessmentResponse> responses = new ArrayList<>();
@@ -199,6 +229,60 @@ public class AssessmentService {
         }
 
         return responses;
+    }
+
+    private void validateExistingResults(Assessment assessment, Map<Long, List<AssessmentCriterion>> criteriaByTask) {
+        var results = resultRepository.findByAssessment_IdOrderByDefensiveTask_SequenceOrderAsc(assessment.getId());
+        if (results.size() != criteriaByTask.size()) {
+            throw new BusinessException("Existing Assessment task results do not match the current Scenario");
+        }
+        for (AssessmentResult result : results) {
+            var expected = criteriaByTask.get(result.getDefensiveTask().getId());
+            var recorded = scoreRepository.findByAssessmentResult_IdOrderByIdAsc(result.getId());
+            if (expected == null || expected.size() != recorded.size() || recorded.stream()
+                    .anyMatch(score -> expected.stream().noneMatch(criterion ->
+                            criterion.getId().equals(score.getCriterion().getId())
+                                    && criterion.getMaxScore().compareTo(score.getMaxScore()) == 0))) {
+                throw new BusinessException("Existing Assessment Scores do not match the current Criteria");
+            }
+        }
+    }
+
+    public record TaskCriteriaStatus(Long taskId, int count, BigDecimal maximum, boolean configured) {}
+
+    public List<TaskCriteriaStatus> getTaskCriteriaStatus(Long exerciseId) {
+        validateId(exerciseId, "Exercise ID");
+        Exercise exercise = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found with ID: " + exerciseId));
+        return defensiveTaskRepository.findByScenario_IdOrderBySequenceOrderAsc(exercise.getScenario().getId())
+                .stream()
+                .map(task -> describeCriteria(task, criterionRepository.findByDefensiveTask_IdOrderByIdAsc(task.getId())))
+                .toList();
+    }
+
+    private TaskCriteriaStatus describeCriteria(DefensiveTask task, List<AssessmentCriterion> criteria) {
+        BigDecimal maximum = criteria.stream()
+                .map(AssessmentCriterion::getMaxScore)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        boolean configured = !criteria.isEmpty() && maximum.compareTo(task.getMaxScore()) == 0
+                && criteria.stream().allMatch(this::isConfiguredCriterion);
+        return new TaskCriteriaStatus(task.getId(), criteria.size(), maximum, configured);
+    }
+
+    private boolean isConfiguredCriterion(AssessmentCriterion criterion) {
+        var rule = criterion.getScoringRule();
+        if ("MANUAL".equalsIgnoreCase(criterion.getCriterionType())) {
+            return rule == null || rule.isEmpty();
+        }
+        if (rule == null || rule.isEmpty()) {
+            return false;
+        }
+        try {
+            AutomatedScoringService.validateRule(rule);
+            return AutomatedScoringService.toBigDecimal(rule.get("score")).compareTo(criterion.getMaxScore()) <= 0;
+        } catch (BusinessException exception) {
+            return false;
+        }
     }
 
     /**
@@ -271,13 +355,19 @@ public class AssessmentService {
                 .distinct()
                 .toList();
 
-        if (exerciseIds.isEmpty()) {
-            return List.of();
+        Map<Long, Assessment> visible = new LinkedHashMap<>();
+        if (!exerciseIds.isEmpty()) {
+            assessmentRepository.findByExercise_IdInOrderByCreatedAtDesc(exerciseIds)
+                    .forEach(assessment -> visible.put(assessment.getId(), assessment));
         }
-
-        return assessmentRepository
-                .findByExercise_IdInOrderByCreatedAtDesc(exerciseIds)
-                .stream()
+        participantRepository.findByUser_IdAndRoleOrderByJoinedAtDesc(userId, "BLUE").stream()
+                .filter(member -> member.getTeam() != null)
+                .flatMap(member -> assessmentRepository.findByExercise_IdAndTeam_Id(
+                        member.getExercise().getId(), member.getTeam().getId()).stream())
+                .filter(BlueSshAccess::isSsh)
+                .forEach(assessment -> visible.put(assessment.getId(), assessment));
+        return visible.values().stream()
+                .sorted(Comparator.comparing(Assessment::getCreatedAt).reversed())
                 .map(this::toAssessmentResponse)
                 .toList();
     }
@@ -295,13 +385,36 @@ public class AssessmentService {
 
         Assessment assessment = findAssessment(assessmentId);
 
-        authorizeExerciseAccess(
-                assessment.getExercise().getId(),
-                currentUserId,
-                systemRole
-        );
+        authorizeAssessmentAccess(assessment, currentUserId, systemRole);
 
         return toAssessmentResponse(assessment);
+    }
+
+    public void authorizeScoreAccess(Long scoreId, String userId, String systemRole) {
+        validateId(scoreId, "Assessment Score ID");
+        Assessment assessment = scoreRepository.findById(scoreId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assessment Score not found"))
+                .getAssessmentResult().getAssessment();
+        authorizeAssessmentAccess(assessment, userId, systemRole);
+    }
+
+    private void authorizeAssessmentAccess(Assessment assessment, String userId, String systemRole) {
+        if (BlueSshAccess.isStudent(systemRole) && BlueSshAccess.isSsh(assessment) && userId != null) {
+            Long studentId;
+            try {
+                studentId = Long.valueOf(userId);
+            } catch (NumberFormatException exception) {
+                throw new AccessDeniedException("Access denied");
+            }
+            boolean ownTeam = participantRepository.findByExercise_IdAndUser_Id(assessment.getExercise().getId(), studentId)
+                    .filter(member -> "BLUE".equals(member.getRole()) && member.getTeam() != null)
+                    .filter(member -> member.getTeam().getId().equals(assessment.getTeam().getId()))
+                    .isPresent();
+            if (ownTeam) {
+                return;
+            }
+        }
+        authorizeExerciseAccess(assessment.getExercise().getId(), userId, systemRole);
     }
 
     /**
@@ -317,11 +430,7 @@ public class AssessmentService {
 
         Assessment assessment = findAssessment(assessmentId);
 
-        authorizeExerciseAccess(
-                assessment.getExercise().getId(),
-                currentUserId,
-                systemRole
-        );
+        authorizeAssessmentAccess(assessment, currentUserId, systemRole);
 
         return resultRepository
                 .findByAssessment_IdOrderByDefensiveTask_SequenceOrderAsc(
@@ -362,6 +471,7 @@ public class AssessmentService {
                         "Assessment result not found with ID: " + resultId
                 ));
 
+        requireManualTaskWorkflow(result);
         // Only PENDING tasks can be started.
         // The entity method records startedAt using server time.
         result.start();
@@ -387,6 +497,7 @@ public class AssessmentService {
                         "Assessment result not found with ID: " + resultId
                 ));
 
+        requireManualTaskWorkflow(result);
         // Record detection using server time.
         result.recordDetection(java.time.Instant.now());
 
@@ -411,6 +522,7 @@ public class AssessmentService {
                         "Assessment result not found with ID: " + resultId
                 ));
 
+        requireManualTaskWorkflow(result);
         // Record response using server time.
         result.recordResponse(java.time.Instant.now());
 
@@ -438,12 +550,23 @@ public class AssessmentService {
                         "Assessment result not found with ID: " + resultId
                 ));
 
+        requireManualTaskWorkflow(result);
         // Complete using server time.
         result.complete(java.time.Instant.now(), reason);
 
         AssessmentResult savedResult = resultRepository.save(result);
 
         return toAssessmentResultResponse(savedResult);
+    }
+
+    private void requireManualTaskWorkflow(AssessmentResult result) {
+        if (usesSshWorkflow(result.getAssessment())) {
+            throw new BusinessException("SSH task status and timestamps are recorded from verified workflow evidence");
+        }
+    }
+
+    private boolean usesSshWorkflow(Assessment assessment) {
+        return SshAssessmentEvaluator.SCENARIO_NAME.equals(assessment.getExercise().getScenario().getName());
     }
 
     /**
@@ -453,6 +576,13 @@ public class AssessmentService {
             Assessment assessment
     ) {
 
+        boolean sshWorkflow = usesSshWorkflow(assessment);
+        BigDecimal finalScore = null;
+        if (sshWorkflow && "REVIEWED".equals(assessment.getReviewStatus())) {
+            BigDecimal maximum = SshAssessmentEvaluator.applicableMaximum(
+                    resultRepository.findByAssessment_IdOrderByDefensiveTask_SequenceOrderAsc(assessment.getId()));
+            finalScore = SshAssessmentEvaluator.normalizedScore(assessment.getTotalScore(), maximum);
+        }
         return new AssessmentResponse(
                 assessment.getId(),
                 assessment.getExercise().getId(),
@@ -468,7 +598,9 @@ public class AssessmentService {
                         : assessment.getReviewedBy().getId(),
                 assessment.getReviewedAt(),
                 assessment.getReviewComment(),
-                assessment.getCreatedAt()
+                assessment.getCreatedAt(),
+                sshWorkflow,
+                finalScore
         );
     }
 

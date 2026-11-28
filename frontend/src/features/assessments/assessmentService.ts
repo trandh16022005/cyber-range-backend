@@ -11,10 +11,11 @@ import type { ApiResponse } from '../exercises/exercise.types'
 // Initialize assessments for eligible BLUE teams
 export const initializeAssessments = async (
     exerciseId: number,
+    teamId?: number,
 ): Promise<Assessment[]> => {
     const response = await api.post<
         ApiResponse<Assessment[]>
-    >(`/exercises/${exerciseId}/assessments/initialize`)
+    >(`/exercises/${exerciseId}/assessments/initialize`, undefined, { params: { teamId } })
 
     return response.data.data
 }

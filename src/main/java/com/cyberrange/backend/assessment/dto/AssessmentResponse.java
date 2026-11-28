@@ -16,6 +16,8 @@ public record AssessmentResponse(
         Long reviewedById,
         Instant reviewedAt,
         String reviewComment,
-        Instant createdAt
+        Instant createdAt,
+        boolean sshWorkflow,
+        BigDecimal finalScore
 ) {
 }

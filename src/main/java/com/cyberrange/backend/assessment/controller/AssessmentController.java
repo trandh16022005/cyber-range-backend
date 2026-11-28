@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -53,11 +54,12 @@ public class AssessmentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<ApiResponse<List<AssessmentResponse>>>
     initializeAssessments(
-            @PathVariable Long exerciseId
+            @PathVariable Long exerciseId,
+            @RequestParam(required = false) Long teamId
     ) {
 
         List<AssessmentResponse> assessments =
-                assessmentService.initializeAssessments(exerciseId);
+                assessmentService.initializeAssessments(exerciseId, teamId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -65,6 +67,16 @@ public class AssessmentController {
                         assessments
                 )
         );
+    }
+
+    @GetMapping("/api/v1/exercises/{exerciseId}/assessment-criteria-status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<List<AssessmentService.TaskCriteriaStatus>>> getTaskCriteriaStatus(
+            @PathVariable Long exerciseId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Assessment criteria status", assessmentService.getTaskCriteriaStatus(exerciseId)
+        ));
     }
 
     /**
@@ -235,11 +247,15 @@ public class AssessmentController {
     @GetMapping(
             "/api/v1/assessment-scores/{scoreId}/evidence"
     )
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<AssessmentScoreEvidenceResponse>>>
     getEvidenceByScore(
-            @PathVariable Long scoreId
+            @PathVariable Long scoreId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
+        if ("STUDENT".equalsIgnoreCase(jwt.getClaimAsString("role"))) {
+            assessmentService.authorizeScoreAccess(scoreId, jwt.getSubject(), jwt.getClaimAsString("role"));
+        }
 
         List<AssessmentScoreEvidenceResponse> evidence =
                 scoreEvidenceService.getEvidenceByScore(scoreId);

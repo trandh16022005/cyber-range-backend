@@ -10,7 +10,8 @@ public record AssessmentScoreEvidenceResponse(
         Long evidenceId,
         String evidenceType,
         String verificationStatus,
-        Instant createdAt
+        Instant createdAt,
+        String origin
 ) {
 
     public static AssessmentScoreEvidenceResponse fromEntity(
@@ -22,7 +23,8 @@ public record AssessmentScoreEvidenceResponse(
                 entity.getEvidence().getId(),
                 entity.getEvidence().getEvidenceType(),
                 entity.getEvidence().getVerificationStatus(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getEvidence().getData() == null ? null : entity.getEvidence().getData().path("origin").asString(null)
         );
     }
 }

@@ -1,7 +1,11 @@
 package com.cyberrange.backend.assessment.repository;
 
 import com.cyberrange.backend.assessment.entity.Assessment;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -40,6 +44,10 @@ public interface AssessmentRepository
             "team"
     })
     Optional<Assessment> findWithExerciseAndTeamById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Assessment a where a.id = :id")
+    Optional<Assessment> findByIdForUpdate(@Param("id") Long id);
 
     boolean existsByExercise_IdAndTeam_Id(
             Long exerciseId,

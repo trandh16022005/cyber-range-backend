@@ -1,17 +1,66 @@
 services:
   ubuntu-target:
+    image: cyber-range-lab-target:local
     build:
       context: .
-      dockerfile: Dockerfile
-    image: cyber-range-ubuntu-target:24.04
-    container_name: cyber-range-ubuntu-target
+      target: target
     hostname: ubuntu-target
-    restart: unless-stopped
-    networks:
-      - cyber-range-network
+    networks: [lab]
+    volumes:
+      - auth-log:/var/log/lab
+      - client-key:/run/lab-client
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/probe.sh ssh && /usr/local/bin/probe.sh logging"]
+      interval: 5s
+      timeout: 5s
+      retries: 4
+
+  lab-client:
+    image: cyber-range-lab-tooling:local
+    build:
+      context: .
+      target: tooling
+    user: "10001:10001"
+    command: ["sleep", "infinity"]
+    networks: [lab]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - client-key:/run/lab-client:ro
+    depends_on:
+      ubuntu-target:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -r /run/lab-client/key && test -r /run/lab-client/known_hosts"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  event-collector:
+    image: cyber-range-lab-tooling:local
+    build:
+      context: .
+      target: tooling
+    user: "10001:10001"
+    command: ["python3", "/opt/lab/collector.py", "run"]
+    networks: [lab]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - auth-log:/var/log/lab:ro
+      - collector-state:/var/lib/ssh-collector
+    healthcheck:
+      test: ["CMD", "python3", "/opt/lab/collector.py", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
 networks:
-  cyber-range-network:
-    name: cyber-range-network
+  lab:
     driver: bridge
     internal: true
+
+volumes:
+  auth-log:
+  client-key:
+  collector-state:

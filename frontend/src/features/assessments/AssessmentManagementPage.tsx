@@ -294,7 +294,7 @@ function AssessmentManagementPage() {
 
                             <p className="mt-1 text-sm text-slate-500">
                                 {role === 'STUDENT'
-                                    ? 'Assessments available to you as a WHITE participant.'
+                                    ? 'Assessments assigned to you or your BLUE Team.'
                                     : 'Assessments associated with the selected exercise.'}
                             </p>
                         </div>
@@ -371,6 +371,10 @@ function AssessmentManagementPage() {
                                                 <Eye className="h-4 w-4" />
                                                 View Details
                                             </Link>
+                                            {role === 'STUDENT' && assessment.sshWorkflow && (
+                                                <Link className="ml-3 text-xs font-semibold text-cyan-800 underline"
+                                                    to={`/assessments/${assessment.id}/ssh-lab`}>Mở bài SSH</Link>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

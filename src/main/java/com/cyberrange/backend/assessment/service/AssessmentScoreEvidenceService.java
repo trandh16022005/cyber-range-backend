@@ -91,6 +91,11 @@ public class AssessmentScoreEvidenceService {
             );
         }
 
+        if (SshAssessmentEvaluator.EVIDENCE_TYPE.equals(evidence.getEvidenceType())
+                && !assessmentResult.getAssessment().getId().equals(evidence.getSshAssessmentId())) {
+            throw new BusinessException("Verified SSH Evidence belongs to a different Team Assessment");
+        }
+
         if (linkRepository
                 .existsByAssessmentScore_IdAndEvidence_Id(
                         assessmentScoreId,

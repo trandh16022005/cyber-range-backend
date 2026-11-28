@@ -1,6 +1,8 @@
 export type AssessmentStatus =
   | 'PENDING'
   | 'IN_PROGRESS'
+  | 'RUNNING'
+  | 'FAILED'
   | 'COMPLETED';
 
 export type AssessmentReviewStatus =
@@ -21,6 +23,8 @@ export interface Assessment {
   teamName: string;
   status: AssessmentStatus;
   totalScore: number;
+  sshWorkflow?: boolean;
+  finalScore?: number | null;
   startedAt: string | null;
   completedAt: string | null;
   reviewStatus: AssessmentReviewStatus;

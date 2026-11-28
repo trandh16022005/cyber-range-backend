@@ -4,6 +4,7 @@ import com.cyberrange.backend.common.response.ApiResponse;
 import com.cyberrange.backend.common.response.PageResponse;
 import com.cyberrange.backend.exercise.dto.CreateExerciseRequest;
 import com.cyberrange.backend.exercise.dto.ExerciseResponse;
+import com.cyberrange.backend.exercise.service.ExerciseLifecycle;
 import com.cyberrange.backend.exercise.service.ExerciseService;
 
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class ExerciseController {
 
     private final ExerciseService exerciseService;
+    private final ExerciseLifecycle lifecycle;
 
-    public ExerciseController(ExerciseService exerciseService) {
+    public ExerciseController(ExerciseService exerciseService, ExerciseLifecycle lifecycle) {
         this.exerciseService = exerciseService;
+        this.lifecycle = lifecycle;
     }
 
     // 1. Get exercises with pagination and filtering
@@ -63,6 +66,28 @@ public class ExerciseController {
                         exercise
                 )
         );
+    }
+
+    @PostMapping("/{id}/prepare")
+    public ApiResponse<ExerciseResponse> prepare(@PathVariable Long id) {
+        return ApiResponse.success("Exercise đã sẵn sàng",
+                lifecycle.change(id, ExerciseLifecycle.Action.PREPARE, "CREATED", false).exercise());
+    }
+
+    public record LifecycleRequest(ExerciseLifecycle.Action action, String expectedStatus, boolean environmentConfirmed) {}
+
+    @GetMapping("/{id}/lifecycle")
+    public ApiResponse<ExerciseLifecycle.View> lifecycle(@PathVariable long id) {
+        return ApiResponse.success("Vòng đời Exercise", lifecycle.get(id));
+    }
+
+    @PostMapping("/{id}/lifecycle")
+    public ResponseEntity<ApiResponse<ExerciseLifecycle.View>> changeLifecycle(@PathVariable long id, @RequestBody LifecycleRequest request) {
+        var result = lifecycle.change(id, request.action(), request.expectedStatus(), request.environmentConfirmed());
+        if (result.awaitingLabStop()) {
+            return ResponseEntity.accepted().body(ApiResponse.success("Đang chờ Runner xác nhận dừng Lab", result));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Đã cập nhật Exercise", result));
     }
 
     // 3. Create exercise

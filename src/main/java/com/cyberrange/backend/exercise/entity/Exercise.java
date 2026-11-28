@@ -98,6 +98,21 @@ public class Exercise {
         return status;
     }
 
+    public void transitionTo(String nextStatus, Instant occurredAt) {
+        status = nextStatus;
+        if ("RUNNING".equals(nextStatus) && startedAt == null) {
+            startedAt = occurredAt;
+        }
+        if (endedAt == null && ("STOPPED".equals(nextStatus) || "COMPLETED".equals(nextStatus) || "CANCELLED".equals(nextStatus))) {
+            endedAt = occurredAt;
+        }
+    }
+
+    public boolean allowsStudentPractice() {
+        // Older Exercises can still use the Lab workflow before opting into lifecycle controls.
+        return "CREATED".equals(status) || "READY".equals(status) || "RUNNING".equals(status);
+    }
+
     public Instant getStartedAt() {
         return startedAt;
     }

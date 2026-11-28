@@ -57,6 +57,11 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnavailable(ServiceUnavailableException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ApiResponse.error(exception.getMessage()));
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
             BadCredentialsException exception

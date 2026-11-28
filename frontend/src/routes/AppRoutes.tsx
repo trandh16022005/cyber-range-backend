@@ -19,6 +19,8 @@ import ExerciseDetailPage from '../features/exercises/ExerciseDetailPage'
 import AssessmentManagementPage from '../features/assessments/AssessmentManagementPage'
 import AssessmentDetailPage from '../features/assessments/AssessmentDetailPage'
 import LabWorkflowPage from '../features/lab-workflow/LabWorkflowPage'
+import StudentSshLabPage from '../features/lab-workflow/StudentSshLabPage'
+import SshPracticePage from '../features/lab-workflow/SshPracticePage'
 
 import ProtectedRoute from './ProtectedRoute'
 
@@ -75,6 +77,11 @@ function AppRoutes() {
                                     path="/lab-workflow"
                                     element={<LabWorkflowPage />}
                                 />
+                            </Route>
+
+                            <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+                                <Route path="/assessments/:id/ssh-lab" element={<StudentSshLabPage />} />
+                                <Route path="/my-labs" element={<SshPracticePage />} />
                             </Route>
 
                             {/* Assessment routes */}

@@ -166,10 +166,14 @@ public class Assessment {
     }
 
     public void start() {
+        start(Instant.now());
+    }
+
+    public void start(Instant startedAt) {
         this.status = "RUNNING";
 
         if (this.startedAt == null) {
-            this.startedAt = Instant.now();
+            this.startedAt = startedAt;
         }
     }
 

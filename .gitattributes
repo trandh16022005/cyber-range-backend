@@ -1,2 +1,3 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+/cyber-range-lab/*.sh text eol=lf

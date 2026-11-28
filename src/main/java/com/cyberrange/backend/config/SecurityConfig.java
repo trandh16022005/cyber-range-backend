@@ -45,6 +45,16 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/lab-agent/desired",
+                                "/api/v1/lab-agent/*/heartbeat",
+                                "/api/v1/lab-agent/*/ssh-events",
+                                "/api/v1/lab-agent/*/collector-health",
+                                "/api/v1/lab-agent/*/containment",
+                                "/api/v1/lab-agent/*/containment/*",
+                                "/api/v1/lab-agent/*/practice-connection",
+                                "/api/v1/lab-agent/*/practice-connection/*"
+                        ).permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )

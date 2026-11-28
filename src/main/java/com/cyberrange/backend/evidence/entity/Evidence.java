@@ -36,6 +36,9 @@ public class Evidence {
     @JoinColumn(name = "event_id")
     private Event event;
 
+    @Column(name = "ssh_assessment_id")
+    private Long sshAssessmentId;
+
     @Column(name = "evidence_type", nullable = false, length = 50)
     private String evidenceType;
 
@@ -102,6 +105,14 @@ public class Evidence {
         if (verificationStatus == null) {
             verificationStatus = "PENDING";
         }
+    }
+
+    public void scopeToAssessment(Long assessmentId) {
+        this.sshAssessmentId = assessmentId;
+    }
+
+    public Long getSshAssessmentId() {
+        return sshAssessmentId;
     }
 
     public Long getId() {

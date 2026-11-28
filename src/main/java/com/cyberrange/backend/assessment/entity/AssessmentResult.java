@@ -274,6 +274,39 @@ public class AssessmentResult {
         this.reason = reason;
     }
 
+    public void completeFromVerifiedSshEvidence(Instant labStartedAt, Instant firstEventAt, Instant detectedAt,
+                                                Instant respondedAt, Instant completedAt, String reason) {
+        completeFromVerifiedSshEvidence(labStartedAt, firstEventAt, detectedAt, respondedAt, completedAt, reason, true);
+    }
+
+    public void completeFromVerifiedSshEvidence(Instant labStartedAt, Instant firstEventAt, Instant detectedAt,
+                                                Instant respondedAt, Instant completedAt, String reason, boolean passed) {
+        if (!"PENDING".equals(status) && !"IN_PROGRESS".equals(status)) {
+            throw new BusinessException("Task has already reached a terminal status");
+        }
+        if (detectedAt.isBefore(firstEventAt) || completedAt.isBefore(detectedAt)
+                || (respondedAt != null && (respondedAt.isBefore(detectedAt) || completedAt.isBefore(respondedAt)))) {
+            throw new IllegalArgumentException("Verified SSH task timestamps are out of sequence");
+        }
+        if (startedAt == null) {
+            startedAt = labStartedAt;
+        }
+        this.detectedAt = detectedAt;
+        this.respondedAt = respondedAt;
+        this.completedAt = completedAt;
+        detectionTime = Duration.between(firstEventAt, detectedAt);
+        responseTime = respondedAt == null ? null : Duration.between(detectedAt, respondedAt);
+        status = passed ? "COMPLETED" : "FAILED";
+        this.reason = reason;
+    }
+
+    public void recordVerifiedSshResponse(Instant alertDetectedAt, Instant responseVerifiedAt) {
+        if (this.respondedAt == null && alertDetectedAt.equals(detectedAt) && !responseVerifiedAt.isBefore(detectedAt)) {
+            this.respondedAt = responseVerifiedAt;
+            this.responseTime = Duration.between(detectedAt, responseVerifiedAt);
+        }
+    }
+
     // Updates
 
     public void updateStatus(String status) {

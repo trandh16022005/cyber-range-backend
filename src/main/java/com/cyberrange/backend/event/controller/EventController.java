@@ -67,6 +67,10 @@ public class EventController {
             );
         }
 
+        if (request.eventType() != null && request.eventType().trim().toUpperCase(java.util.Locale.ROOT).startsWith("SSH_AUTH_")) {
+            throw new IllegalArgumentException("SSH authentication observations require the Collector endpoint");
+        }
+
         EventResponse event = eventService.createEvent(request);
 
         return ResponseEntity.status(201).body(

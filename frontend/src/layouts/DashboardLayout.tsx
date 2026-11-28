@@ -45,6 +45,12 @@ function DashboardLayout() {
             roles: ['ADMIN', 'INSTRUCTOR'],
         },
         {
+            name: 'Bài thực hành',
+            path: '/my-labs',
+            icon: Workflow,
+            roles: ['STUDENT'],
+        },
+        {
             name: 'Assessments',
             path: '/assessments',
             icon: ClipboardList,
